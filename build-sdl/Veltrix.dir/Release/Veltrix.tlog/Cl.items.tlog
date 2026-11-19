@@ -1,0 +1,13 @@
+D:\PYTHON\Veltrix Engine\engine\main.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\main.obj
+D:\PYTHON\Veltrix Engine\engine\core\engine.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\engine.obj
+D:\PYTHON\Veltrix Engine\engine\dom\node.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\node.obj
+D:\PYTHON\Veltrix Engine\engine\dom\document.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\document.obj
+D:\PYTHON\Veltrix Engine\engine\html\parser.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\engine\html\parser.cpp.obj
+D:\PYTHON\Veltrix Engine\engine\css\style.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\style.obj
+D:\PYTHON\Veltrix Engine\engine\css\parser.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\engine\css\parser.cpp.obj
+D:\PYTHON\Veltrix Engine\engine\css\style_engine.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\style_engine.obj
+D:\PYTHON\Veltrix Engine\engine\layout\layout_engine.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\layout_engine.obj
+D:\PYTHON\Veltrix Engine\engine\render\display_list.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\display_list.obj
+D:\PYTHON\Veltrix Engine\engine\render\font_manager.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\font_manager.obj
+D:\PYTHON\Veltrix Engine\engine\render\text_renderer.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\text_renderer.obj
+D:\PYTHON\Veltrix Engine\engine\render\display_list_builder.cpp;D:\PYTHON\Veltrix Engine\build-sdl\Veltrix.dir\Release\display_list_builder.obj

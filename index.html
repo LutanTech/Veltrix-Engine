@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <h1>Veltrix CSS Variables</h1>
+    <p>Global variables are working.</p>
+
+    <div class="card">
+        <h2>Locally overridden variable</h2>
+    </div>
+
+    <p class="fallback">Fallback variables are working.</p>
+    <p class="nested">Nested variables are working.</p>
+
+    <style>
+        body {
+            color: white;
+            background-color: #171126;
+        }
+    
+        .card {
+            color: rebeccapurple;
+            background-color: currentColor;
+        }
+    
+        .card p {
+            color: orange;
+            background-color: currentColor;
+        }
+    </style>
+    
+    <div class="card">
+        <h2>Veltrix currentColor</h2>
+        <p>My background should use my text color.</p>
+    </div>
+</body>
+</html>

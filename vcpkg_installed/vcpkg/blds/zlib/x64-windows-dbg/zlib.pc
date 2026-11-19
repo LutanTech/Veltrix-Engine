@@ -1,0 +1,14 @@
+prefix=D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/zlib_x64-windows/debug
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+sharedlibdir=${libdir}
+includedir=${prefix}/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.4
+License: Zlib
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}

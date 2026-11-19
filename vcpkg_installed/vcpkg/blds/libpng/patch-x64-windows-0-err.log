@@ -1,0 +1,6 @@
+Checking patch CMakeLists.txt...
+Hunk #4 succeeded at 675 (offset 2 lines).
+Hunk #5 succeeded at 1014 (offset 63 lines).
+Hunk #6 succeeded at 1103 (offset 63 lines).
+Hunk #7 succeeded at 1177 (offset 70 lines).
+Applied patch CMakeLists.txt cleanly.

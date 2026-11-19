@@ -1,0 +1,69 @@
+Package: vcpkg-cmake-config
+Version: 2026-07-21
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 51e01208d07777a3b5b872cdd73a70cf3f649726a53913b5a02a9cb09c4d8ccc
+Status: install ok installed
+
+Package: vcpkg-cmake
+Version: 2026-11-09
+Architecture: x64-windows
+Multi-Arch: same
+Abi: e3b2a6b86e52bf8daf0475b577cce6e9bceb990d0b540af999b1b64cac7eede2
+Status: install ok installed
+
+Package: sdl3
+Version: 3.4.20
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 41de7515e09a7220118575d2db7fece5374b16110d23f29abcd54f266e79b1ea
+Description: Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.
+Status: install ok installed
+
+Package: zlib
+Version: 1.4
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 328e7d95ba52f83880b7f5473cc91cb1caa769f9ebbe897e727a6fce19b268e6
+Description: A compression library
+Status: install ok installed
+
+Package: libpng
+Version: 1.6.59
+Port-Version: 1
+Depends: vcpkg-cmake, vcpkg-cmake-config, zlib
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 33a86d2037bbbc2c62f135b3099688da6b225e51b6a4d6d5b4b8e8cd26fa4635
+Description: libpng is a library implementing an interface for reading and writing PNG (Portable Network Graphics) format files
+Status: install ok installed
+
+Package: bzip2
+Version: 1.0.8
+Port-Version: 6
+Depends: vcpkg-cmake
+Architecture: x64-windows
+Multi-Arch: same
+Abi: d2ba9b2d9630417e4dec5eca077f7cce2338d898900e6795105810324217ee6c
+Description: bzip2 is a freely available, patent free, high-quality data compressor. It typically compresses files to within 10% to 15% of the best available techniques (the PPM family of statistical compressors), whilst being around twice as fast at compression and six times faster at decompression.
+Default-Features: tool
+Status: install ok installed
+
+Package: bzip2
+Feature: tool
+Architecture: x64-windows
+Multi-Arch: same
+Description: Builds bzip2 executable
+Status: install ok installed
+
+Package: brotli
+Version: 1.2.1
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: df43fdbbf13d9e31efb3d2594cdd5d25e325df7ce269352f0aa1e7e880ed4ce7
+Description: a generic-purpose lossless compression algorithm that compresses data using a combination of a modern variant of the LZ77 algorithm, Huffman coding and 2nd order context modeling.
+Status: install ok installed
+

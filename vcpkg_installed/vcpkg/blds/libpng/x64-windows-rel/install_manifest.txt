@@ -1,0 +1,17 @@
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/libpng16.lib
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/bin/libpng16.dll
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/include/png.h
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/include/pngconf.h
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/include/pnglibconf.h
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/include/libpng16/png.h
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/include/libpng16/pngconf.h
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/include/libpng16/pnglibconf.h
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/pkgconfig/libpng16.pc
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/libpng/libpng16.cmake
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/libpng/libpng16-release.cmake
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/libpng16.lib
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/bin/libpng16.dll
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/cmake/PNG/PNGTargets.cmake
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/cmake/PNG/PNGTargets-release.cmake
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/cmake/PNG/PNGConfig.cmake
+D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib/cmake/PNG/PNGConfigVersion.cmake

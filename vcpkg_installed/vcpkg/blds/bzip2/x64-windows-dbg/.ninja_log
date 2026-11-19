@@ -1,0 +1,11 @@
+# ninja log v7
+4	277	8167934514635056	CMakeFiles/bz2.dir/blocksort.c.obj	a2eeac804b6e3ec6
+15	292	8167934514745058	CMakeFiles/bz2.dir/huffman.c.obj	cd9e9b1dbf03d09a
+28	307	8167934514875072	CMakeFiles/bz2.dir/crctable.c.obj	98787ab6b2e588e1
+57	380	8167934515165077	CMakeFiles/bz2.dir/randtable.c.obj	a8d93f141dfeb768
+74	381	8167934515328956	CMakeFiles/bz2.dir/compress.c.obj	e7b944ec9a7e3ad4
+292	513	8167934517518940	CMakeFiles/bz2.dir/bzlib.c.obj	1c20805b0e99c0f0
+278	537	8167934517378941	CMakeFiles/bz2.dir/decompress.c.obj	be9d9af4074644ca
+537	983	8167934524151081	bz2d.dll	af536b9e214588f
+537	983	8167934524151081	bz2d.lib	af536b9e214588f
+983	1104	8167934524431109	CMakeFiles/install.util	8c15c42f1d4d48d8

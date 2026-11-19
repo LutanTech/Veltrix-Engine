@@ -1,0 +1,12 @@
+prefix=D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows
+exec_prefix=D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows
+libdir=D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/lib
+includedir=D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/pkgs/libpng_x64-windows/include/libpng16
+
+Name: libpng
+Description: Loads and saves PNG files
+Version: 1.6.59
+Requires.private: zlib
+Libs: -L${libdir} -lpng16
+Libs.private: 
+Cflags: -I${includedir}
