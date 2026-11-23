@@ -43,6 +43,9 @@
     <ClCompile Include="D:\PYTHON\Veltrix Engine\engine\css\tokenizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\PYTHON\Veltrix Engine\engine\layout\text_layout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\PYTHON\Veltrix Engine\CMakeLists.txt" />

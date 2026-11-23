@@ -391,6 +391,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="D:\PYTHON\Veltrix Engine\engine\render\text_renderer.cpp" />
     <ClCompile Include="D:\PYTHON\Veltrix Engine\engine\render\display_list_builder.cpp" />
     <ClCompile Include="D:\PYTHON\Veltrix Engine\engine\css\tokenizer.cpp" />
+    <ClCompile Include="D:\PYTHON\Veltrix Engine\engine\layout\text_layout.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

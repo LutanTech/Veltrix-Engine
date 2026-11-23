@@ -221,7 +221,9 @@ void DisplayListBuilder::buildNode(
     float parentY,
     const std::string& inheritedColor
 ) {
-    if (!node || !node->domNode) return;
+    if (!node || !node->domNode) {
+        return;
+    }
 
     float absoluteX = parentX + node->x;
     float absoluteY = parentY + node->y;
@@ -231,16 +233,19 @@ void DisplayListBuilder::buildNode(
     std::string colorValue = inheritedColor;
 
     if (domNode->type() == NodeType::Element) {
-        std::string computedColor = domNode->computedStyle("color");
+        std::string computedColor =
+            domNode->computedStyle("color");
 
         if (!computedColor.empty()) {
             colorValue = computedColor;
         }
 
-        std::string background = domNode->computedStyle("background-color");
+        std::string background =
+            domNode->computedStyle("background-color");
 
         if (!background.empty()) {
-            Color backgroundColor = parseColor(background);
+            Color backgroundColor =
+                parseColor(background, colorValue);
 
             if (backgroundColor.a > 0) {
                 displayList.addRect(
@@ -252,33 +257,97 @@ void DisplayListBuilder::buildNode(
                 );
             }
         }
+
+        Color borderColor =
+            parseColor(
+                domNode->computedStyle("border-color"),
+                colorValue
+            );
+
+        if (borderColor.a > 0) {
+            if (node->borderTop > 0) {
+                displayList.addRect(
+                    absoluteX,
+                    absoluteY,
+                    node->width,
+                    node->borderTop,
+                    borderColor
+                );
+            }
+
+            if (node->borderRight > 0) {
+                displayList.addRect(
+                    absoluteX + node->width - node->borderRight,
+                    absoluteY,
+                    node->borderRight,
+                    node->height,
+                    borderColor
+                );
+            }
+
+            if (node->borderBottom > 0) {
+                displayList.addRect(
+                    absoluteX,
+                    absoluteY + node->height - node->borderBottom,
+                    node->width,
+                    node->borderBottom,
+                    borderColor
+                );
+            }
+
+            if (node->borderLeft > 0) {
+                displayList.addRect(
+                    absoluteX,
+                    absoluteY,
+                    node->borderLeft,
+                    node->height,
+                    borderColor
+                );
+            }
+        }
     }
 
+    
     if (domNode->type() == NodeType::Text) {
-        const std::string& content = domNode->text();
+        if (!node->textFragments.empty()) {
+            for (const auto& fragment : node->textFragments) {
+                if (fragment.text.empty()) {
+                    continue;
+                }
 
-        bool onlyWhitespace = std::all_of(
-            content.begin(),
-            content.end(),
-            [](unsigned char c) {
-                return std::isspace(c);
+                displayList.addText(
+                    absoluteX + fragment.x,
+                    absoluteY + fragment.y + node->fontSize,
+                    node->fontSize,
+                    fragment.text,
+                    parseColor(colorValue)
+                );
             }
-        );
+        } else {
+            const std::string& content = domNode->text();
 
-        if (!content.empty() && !onlyWhitespace) {
-            float fontSize = node->fontSize;
-
-            displayList.addText(
-                absoluteX,
-                absoluteY + fontSize,
-                fontSize,
-                content,
-                parseColor(colorValue)
+            bool onlyWhitespace = std::all_of(
+                content.begin(),
+                content.end(),
+                [](unsigned char c) {
+                    return std::isspace(c);
+                }
             );
+
+            if (!content.empty() && !onlyWhitespace) {
+                displayList.addText(
+                    absoluteX,
+                    absoluteY + node->fontSize,
+                    node->fontSize,
+                    content,
+                    parseColor(colorValue)
+                );
+            }
         }
 
         return;
     }
+
 
     for (const auto& child : node->children) {
         buildNode(

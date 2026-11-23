@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "parser.h"
@@ -21,10 +20,17 @@ private:
 
     void apply(
         Node* node,
-        const std::unordered_map<std::string, std::string>& inheritedVariables
+        const std::unordered_map<std::string, std::string>& inheritedVariables,
+        const std::vector<Node*>& ancestors
     );
 
     bool matches(const std::string& selector, Node* node);
+
+    bool matchesSelector(
+        const std::string& selector,
+        Node* node,
+        const std::vector<Node*>& ancestors
+    );
 };
 
 }

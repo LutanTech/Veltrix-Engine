@@ -1,4 +1,6 @@
+
 #include "engine.h"
+#include <algorithm>
 
 namespace Veltrix {
 
@@ -43,6 +45,49 @@ bool Engine::initialize() {
 
 void Engine::setDisplayList(const DisplayList& list) {
     displayList = list;
+    updateContentHeight();
+    scrollOffset = 0;
+}
+
+void Engine::updateContentHeight() {
+    contentHeight = 0;
+
+    for (const auto& rect : displayList.rectangles()) {
+        contentHeight = std::max(
+            contentHeight,
+            rect.y + rect.height
+        );
+    }
+
+    for (const auto& text : displayList.texts()) {
+        contentHeight = std::max(
+            contentHeight,
+            text.y + text.size
+        );
+    }
+
+    int width = 0;
+    int height = 0;
+
+    if (window && SDL_GetWindowSize(window, &width, &height)) {
+        viewportHeight = static_cast<float>(height);
+    }
+
+    scrollOffset = std::clamp(
+        scrollOffset,
+        0.0f,
+        std::max(0.0f, contentHeight - viewportHeight)
+    );
+}
+
+void Engine::handleScroll(float amount) {
+    scrollOffset -= amount * scrollSpeed;
+
+    scrollOffset = std::clamp(
+        scrollOffset,
+        0.0f,
+        std::max(0.0f, contentHeight - viewportHeight)
+    );
 }
 
 void Engine::run() {
@@ -53,7 +98,30 @@ void Engine::run() {
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
             }
+
+            if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+                float amount = event.wheel.y;
+
+                if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+                    amount = -amount;
+                }
+
+                handleScroll(amount);
+            }
         }
+
+        int windowWidth = 0;
+        int windowHeight = 0;
+
+        if (SDL_GetWindowSize(window, &windowWidth, &windowHeight)) {
+            viewportHeight = static_cast<float>(windowHeight);
+        }
+
+        scrollOffset = std::clamp(
+            scrollOffset,
+            0.0f,
+            std::max(0.0f, contentHeight - viewportHeight)
+        );
 
         SDL_SetRenderDrawColor(renderer, 23, 17, 38, 255);
         SDL_RenderClear(renderer);
@@ -69,7 +137,7 @@ void Engine::run() {
 
             SDL_FRect destination{
                 rect.x,
-                rect.y,
+                rect.y - scrollOffset,
                 rect.width,
                 rect.height
             };
@@ -78,7 +146,10 @@ void Engine::run() {
         }
 
         for (const auto& text : displayList.texts()) {
-            textRenderer.render(text);
+            PaintText visibleText = text;
+            visibleText.y -= scrollOffset;
+
+            textRenderer.render(visibleText);
         }
 
         SDL_RenderPresent(renderer);

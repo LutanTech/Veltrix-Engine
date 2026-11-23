@@ -1,10 +1,67 @@
+
 #include "text_renderer.h"
+
+#include <algorithm>
+#include <cstdint>
+#include <vector>
 
 namespace Veltrix {
 
-bool TextRenderer::initialize(SDL_Renderer* rendererPtr, const std::string& fontPath) {
-    renderer = rendererPtr;
-    return fontManager.initialize(fontPath);
+namespace {
+
+uint32_t nextCodepoint(const std::string& text, size_t& position) {
+    unsigned char first = static_cast<unsigned char>(text[position++]);
+
+    if (first < 0x80) {
+        return first;
+    }
+
+    if ((first & 0xE0) == 0xC0 && position < text.size()) {
+        return ((first & 0x1F) << 6) |
+            (static_cast<unsigned char>(text[position++]) & 0x3F);
+    }
+
+    if ((first & 0xF0) == 0xE0 && position + 1 < text.size()) {
+        uint32_t value = first & 0x0F;
+        value = (value << 6) |
+            (static_cast<unsigned char>(text[position++]) & 0x3F);
+        value = (value << 6) |
+            (static_cast<unsigned char>(text[position++]) & 0x3F);
+        return value;
+    }
+
+    if ((first & 0xF8) == 0xF0 && position + 2 < text.size()) {
+        uint32_t value = first & 0x07;
+
+        for (int i = 0; i < 3; ++i) {
+            value = (value << 6) |
+                (static_cast<unsigned char>(text[position++]) & 0x3F);
+        }
+
+        return value;
+    }
+
+    return 0xFFFD;
+}
+
+}
+
+bool TextRenderer::initialize(
+    SDL_Renderer* renderer,
+    const std::string& fontPath
+) {
+    this->renderer = renderer;
+
+    if (!this->renderer) {
+        return false;
+    }
+
+    if (!fontManager.initialize(fontPath)) {
+        this->renderer = nullptr;
+        return false;
+    }
+
+    return true;
 }
 
 void TextRenderer::shutdown() {
@@ -12,89 +69,179 @@ void TextRenderer::shutdown() {
     renderer = nullptr;
 }
 
+float TextRenderer::measureText(
+    const std::string& text,
+    float size
+) {
+    return fontManager.measureText(
+        text,
+        static_cast<unsigned int>(std::max(1.0f, size))
+    );
+}
+
+float TextRenderer::lineHeight(float size) {
+    return fontManager.lineHeight(
+        static_cast<unsigned int>(std::max(1.0f, size))
+    );
+}
+
 void TextRenderer::render(const PaintText& text) {
     if (!renderer || !fontManager.face()) {
         return;
     }
 
-    if (!fontManager.setSize(static_cast<unsigned int>(text.size))) {
+    unsigned int size = static_cast<unsigned int>(
+        std::max(1.0f, text.size)
+    );
+
+    if (!fontManager.setSize(size)) {
         return;
     }
 
     FT_Face face = fontManager.face();
 
-    float penX = text.x;
-    float baseline = text.y;
+    float cursorX = text.x;
+    float baselineY = text.y;
 
-    for (unsigned char character : text.text) {
-        if (FT_Load_Char(face, character, FT_LOAD_RENDER) != 0) {
+    FT_UInt previousGlyph = 0;
+
+    for (size_t position = 0; position < text.text.size();) {
+        uint32_t codepoint = nextCodepoint(text.text, position);
+
+        if (codepoint == '\r') {
+            continue;
+        }
+
+        if (codepoint == '\n') {
+            cursorX = text.x;
+            baselineY += lineHeight(static_cast<float>(size));
+            previousGlyph = 0;
+            continue;
+        }
+
+        FT_UInt glyphIndex = FT_Get_Char_Index(face, codepoint);
+
+        if (FT_HAS_KERNING(face) && previousGlyph && glyphIndex) {
+            FT_Vector kerning;
+
+            if (FT_Get_Kerning(
+                face,
+                previousGlyph,
+                glyphIndex,
+                FT_KERNING_DEFAULT,
+                &kerning
+            ) == 0) {
+                cursorX += static_cast<float>(kerning.x) / 64.0f;
+            }
+        }
+
+        if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_DEFAULT) != 0) {
+            previousGlyph = glyphIndex;
+            continue;
+        }
+
+        if (FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL) != 0) {
+            cursorX += static_cast<float>(
+                face->glyph->advance.x
+            ) / 64.0f;
+
+            previousGlyph = glyphIndex;
             continue;
         }
 
         FT_GlyphSlot glyph = face->glyph;
+        FT_Bitmap& bitmap = glyph->bitmap;
 
-        if (glyph->bitmap.width == 0 || glyph->bitmap.rows == 0) {
-            penX += glyph->advance.x / 64.0f;
-            continue;
-        }
+        if (bitmap.width > 0 && bitmap.rows > 0) {
+            int width = static_cast<int>(bitmap.width);
+            int height = static_cast<int>(bitmap.rows);
 
-        SDL_Surface* surface = SDL_CreateSurface(
-            glyph->bitmap.width,
-            glyph->bitmap.rows,
-            SDL_PIXELFORMAT_RGBA32
-        );
+            std::vector<uint32_t> pixels(
+                static_cast<size_t>(width) * height,
+                0
+            );
 
-        if (!surface) {
-            penX += glyph->advance.x / 64.0f;
-            continue;
-        }
+            for (int y = 0; y < height; ++y) {
+                const unsigned char* source;
 
-        uint8_t* pixels = static_cast<uint8_t*>(surface->pixels);
-        int pitch = surface->pitch;
+                if (bitmap.pitch >= 0) {
+                    source = bitmap.buffer + y * bitmap.pitch;
+                } else {
+                    source = bitmap.buffer +
+                        (height - 1 - y) * (-bitmap.pitch);
+                }
 
-        for (unsigned int y = 0; y < glyph->bitmap.rows; ++y) {
-            for (unsigned int x = 0; x < glyph->bitmap.width; ++x) {
-                uint8_t alpha = glyph->bitmap.buffer[
-                    y * glyph->bitmap.pitch + x
-                ];
+                for (int x = 0; x < width; ++x) {
+                    unsigned char alpha = 0;
 
-                uint8_t* pixel = pixels + y * pitch + x * 4;
+                    if (bitmap.pixel_mode == FT_PIXEL_MODE_GRAY) {
+                        alpha = source[x];
 
-                pixel[0] = text.color.r;
-                pixel[1] = text.color.g;
-                pixel[2] = text.color.b;
-                pixel[3] = alpha;
+                        if (bitmap.num_grays > 1 &&
+                            bitmap.num_grays != 256) {
+                            alpha = static_cast<unsigned char>(
+                                alpha * 255 / (bitmap.num_grays - 1)
+                            );
+                        }
+                    } else if (bitmap.pixel_mode == FT_PIXEL_MODE_MONO) {
+                        alpha = (source[x / 8] &
+                            (0x80 >> (x % 8))) ? 255 : 0;
+                    }
+
+                    pixels[
+                        static_cast<size_t>(y) * width + x
+                    ] =
+                        (static_cast<uint32_t>(alpha) << 24) |
+                        (static_cast<uint32_t>(text.color.b) << 16) |
+                        (static_cast<uint32_t>(text.color.g) << 8) |
+                        static_cast<uint32_t>(text.color.r);
+                }
+            }
+
+            SDL_Texture* texture = SDL_CreateTexture(
+                renderer,
+                SDL_PIXELFORMAT_RGBA32,
+                SDL_TEXTUREACCESS_STATIC,
+                width,
+                height
+            );
+
+            if (texture) {
+                SDL_UpdateTexture(
+                    texture,
+                    nullptr,
+                    pixels.data(),
+                    width * sizeof(uint32_t)
+                );
+
+                SDL_SetTextureBlendMode(
+                    texture,
+                    SDL_BLENDMODE_BLEND
+                );
+
+                SDL_FRect destination = {
+                    cursorX + static_cast<float>(glyph->bitmap_left),
+                    baselineY - static_cast<float>(glyph->bitmap_top),
+                    static_cast<float>(width),
+                    static_cast<float>(height)
+                };
+
+                SDL_RenderTexture(
+                    renderer,
+                    texture,
+                    nullptr,
+                    &destination
+                );
+
+                SDL_DestroyTexture(texture);
             }
         }
 
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+        cursorX += static_cast<float>(
+            glyph->advance.x
+        ) / 64.0f;
 
-        SDL_DestroySurface(surface);
-
-        if (!texture) {
-            penX += glyph->advance.x / 64.0f;
-            continue;
-        }
-
-        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-
-        SDL_FRect destination{
-            penX + glyph->bitmap_left,
-            baseline - glyph->bitmap_top,
-            static_cast<float>(glyph->bitmap.width),
-            static_cast<float>(glyph->bitmap.rows)
-        };
-
-        SDL_RenderTexture(
-            renderer,
-            texture,
-            nullptr,
-            &destination
-        );
-
-        SDL_DestroyTexture(texture);
-
-        penX += glyph->advance.x / 64.0f;
+        previousGlyph = glyphIndex;
     }
 }
 

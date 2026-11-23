@@ -27,6 +27,7 @@ add_executable(Veltrix
     engine/render/text_renderer.cpp
     engine/render/display_list_builder.cpp
     engine/css/tokenizer.cpp
+    engine/layout/text_layout.cpp
 )
 
 add_subdirectory(

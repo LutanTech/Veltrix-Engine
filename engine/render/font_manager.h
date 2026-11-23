@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <string>
@@ -15,9 +16,12 @@ public:
     FT_Face face() const;
     bool setSize(unsigned int size);
 
+    float measureText(const std::string& text, unsigned int size);
+    float lineHeight(unsigned int size);
+
 private:
     FT_Library library = nullptr;
     FT_Face fontFace = nullptr;
 };
 
-} 
+}
