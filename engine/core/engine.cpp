@@ -941,6 +941,21 @@ void Engine::run(){
             if(std::abs(targetScrollOffset-scrollOffset)<.1f)scrollOffset=targetScrollOffset;
         }
 
+        float cursorX=0,cursorY=0;
+        SDL_GetMouseState(&cursorX,&cursorY);
+        bool cursorResolved=false;
+        const auto& cursorElements=displayList.elements();
+        for(auto it=cursorElements.rbegin();it!=cursorElements.rend();++it){
+            if(it->type!=PaintElementType::Input&&it->type!=PaintElementType::Button)continue;
+            float y=it->y-scrollOffset;
+            if(cursorX>=it->x&&cursorX<=it->x+it->width&&cursorY>=y&&cursorY<=y+it->height){
+                setTextCursor(it->type==PaintElementType::Input);
+                cursorResolved=true;
+                break;
+            }
+        }
+        if(!cursorResolved)setTextCursor(false);
+
         SDL_SetRenderDrawColor(renderer,255,255,255,255);
         SDL_RenderClear(renderer);
 
