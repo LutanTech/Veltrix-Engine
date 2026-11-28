@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.20)
 
 project(Veltrix
@@ -14,7 +13,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(lexbor CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
-find_package(CURL CONFIG REQUIRED)
 
 add_executable(Veltrix
     engine/main.cpp
@@ -45,6 +43,5 @@ target_link_libraries(Veltrix PRIVATE
     freetype
     SDL3::SDL3
     lexbor::lexbor
-    CURL::libcurl
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
 )
