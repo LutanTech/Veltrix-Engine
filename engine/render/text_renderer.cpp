@@ -108,6 +108,16 @@ float TextRenderer::lineHeight(float size) {
     );
 }
 
+float TextRenderer::baseline(float size) {
+    unsigned int fontSize=static_cast<unsigned int>(std::max(1.0f,size));
+    if(!fontManager.setSize(fontSize))return lineHeight(size)*.8f;
+    FT_Face face=fontManager.face();
+    if(!face||!face->size)return lineHeight(size)*.8f;
+    float ascender=face->size->metrics.ascender/64.0f;
+    float metricsHeight=face->size->metrics.height/64.0f;
+    return (lineHeight(size)-metricsHeight)*.5f+ascender;
+}
+
 const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
     uint32_t codepoint,
     unsigned int size,
