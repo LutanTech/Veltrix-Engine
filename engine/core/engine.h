@@ -96,6 +96,10 @@ private:
     size_t inputSelectionStart=0;
     size_t inputSelectionEnd=0;
     bool inputSelecting=false;
+    float mouseX=0;
+    float mouseY=0;
+    int hoveredButton=-1;
+    int pressedButton=-1;
 
     bool handleInputMouse(const SDL_Event& event);
     void handleInputKeyboard(const SDL_Event& event);
