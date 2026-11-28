@@ -410,11 +410,9 @@ void Engine::renderTextSelection(){
         from=std::min(from,text.text.size());
         to=std::min(to,text.text.size());
         if(from==to)continue;
-        float x=text.x+textWidth(text,from);
-        float width=textWidth(text,to)-textWidth(text,from);
+        auto bounds=textRenderer.measureRangeBounds(text,from,to);
         float h=textRenderer.lineHeight(text.size);
-        if(to==text.text.size())width+=text.size*.25f;
-        SDL_FRect rect{x,text.y-scrollOffset-h*.82f,std::max(width,1.0f),h};
+        SDL_FRect rect{text.x+bounds.first,text.y-scrollOffset-h*.82f,std::max(bounds.second-bounds.first,1.0f),h};
         SDL_RenderFillRect(renderer,&rect);
     }
 
