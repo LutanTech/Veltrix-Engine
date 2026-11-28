@@ -1092,8 +1092,8 @@ void Engine::renderFrame(){
             float linkY=link.y-scrollOffset;
             bool pointerInside=pointerX>=link.x&&pointerX<=link.x+link.width&&pointerY>=linkY&&pointerY<=linkY+link.height;
             bool sameLine=top<linkY+link.height&&bottom>linkY;
-            bool overlapsText=text.x<link.x+link.width&&text.x+textWidth>link.x;
-            if(pointerInside&&sameLine&&overlapsText)visibleText.color=link.textColor;
+            bool containsText=text.x>=link.x-1.0f&&text.x+textWidth<=link.x+link.width+1.0f;
+            if(pointerInside&&sameLine&&containsText)visibleText.color=link.textColor;
         }
         renderTextItem(visibleText,static_cast<int>(i));
         if(visibleText.underline){
