@@ -59,6 +59,9 @@ private:
     Uint64 caretStartTime=0;
 
     void updateScrollbar();
+    void rebuildLayout(int width,int height);
+    void renderFrame();
+    static bool SDLCALL handleLiveResizeEvent(void* userdata,SDL_Event* event);
     void renderScrollbar();
     void handleScrollbar(const SDL_Event& event);
     void updateContentHeight();
