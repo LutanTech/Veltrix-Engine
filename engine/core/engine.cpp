@@ -8,20 +8,12 @@
 #include <filesystem>
 #include <vector>
 #include <SDL3_image/SDL_image.h>
-#include <curl/curl.h>
 
 namespace Veltrix {
 
 namespace {
 
 
-size_t receiveImageData(char* data,size_t size,size_t count,void* user){
-    auto* bytes=static_cast<std::vector<uint8_t>*>(user);
-    size_t length=size*count;
-    if(length>64*1024*1024-bytes->size())return 0;
-    bytes->insert(bytes->end(),data,data+length);
-    return length;
-}
 std::vector<uint8_t> decodeBase64(const std::string& input){
     static const std::string chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     std::vector<uint8_t> output;
@@ -96,7 +88,6 @@ bool isWhitespaceCharacter(const std::string& text,size_t offset){
 
 bool Engine::initialize(){
     if(!SDL_Init(SDL_INIT_VIDEO))return false;
-    curl_global_init(CURL_GLOBAL_DEFAULT);
     SDL_DisplayID display=SDL_GetPrimaryDisplay();
     const SDL_DisplayMode* mode=SDL_GetCurrentDisplayMode(display);
     int width=mode?static_cast<int>(mode->w*.85f):1100;
@@ -156,24 +147,6 @@ SDL_Texture* Engine::loadImageTexture(const std::string& source){
     }else if(source.rfind("data:",0)==0){
         bytes=decodeDataUri(source);
         surface=decodeImageBytes(bytes);
-    }else if(source.rfind("http://",0)==0||source.rfind("https://",0)==0){
-        CURL* curl=curl_easy_init();
-        if(curl){
-            curl_easy_setopt(curl,CURLOPT_URL,source.c_str());
-            curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION,1L);
-            curl_easy_setopt(curl,CURLOPT_MAXREDIRS,8L);
-            curl_easy_setopt(curl,CURLOPT_PROTOCOLS_STR,"http,https");
-            curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,receiveImageData);
-            curl_easy_setopt(curl,CURLOPT_WRITEDATA,&bytes);
-            curl_easy_setopt(curl,CURLOPT_USERAGENT,"Veltrix/0.1");
-            curl_easy_setopt(curl,CURLOPT_CONNECTTIMEOUT,15L);
-            curl_easy_setopt(curl,CURLOPT_TIMEOUT,30L);
-            CURLcode result=curl_easy_perform(curl);
-            long status=0;
-            curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&status);
-            curl_easy_cleanup(curl);
-            if(result==CURLE_OK&&status>=200&&status<300)surface=decodeImageBytes(bytes);
-        }
     }else{
         std::string path=source;
         if(path.rfind("file://",0)==0)path=path.substr(7);
@@ -1382,7 +1355,6 @@ void Engine::shutdown(){
     imageTextures.clear();
     textRenderer.shutdown();
     blobResources.clear();
-    curl_global_cleanup();
 
     if(arrowCursor){
         SDL_DestroyCursor(arrowCursor);
