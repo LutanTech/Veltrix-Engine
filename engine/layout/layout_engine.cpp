@@ -908,6 +908,8 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         float startY=flow.y;
         float outerFlowY=startY;
         float outerLineStartX=flow.lineStartX;
+        float outerMaximumWidth=flow.maximumWidth;
+        flow.maximumWidth=flow.x;
 
         float referenceLineHeight=std::max(
             parentLineHeight,
@@ -1038,8 +1040,11 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         flow.y+=previousBlockMargin;
 
         
+        float innerMaximumX=std::max(flow.x,flow.maximumWidth);
+        flow.maximumWidth=std::max(outerMaximumWidth,innerMaximumX);
+
         float consumedWidth=
-            flow.x-
+            std::max(flow.x,innerMaximumX)-
             elementOriginX;
 
         float consumedHeight=
