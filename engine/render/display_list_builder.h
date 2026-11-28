@@ -18,7 +18,9 @@ private:
         float parentY,
         const std::string& inheritedColor,
         int inheritedWeight,
-        bool insideButton
+        bool insideButton,
+        const std::string& inheritedLink="",
+        bool inheritedUnderline=false
     );
 
     Color parseColor(
