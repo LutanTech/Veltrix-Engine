@@ -21,3 +21,12 @@ Abi: 41de7515e09a7220118575d2db7fece5374b16110d23f29abcd54f266e79b1ea
 Description: Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.
 Status: install ok installed
 
+Package: lexbor
+Version: 3.0.1
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 7312f49c52afbbe282ca4e7387ee887d6d2c955440c461ef1e4876ee9e2fb75c
+Description: Lexbor is development of an open source HTML Renderer library.
+Status: install ok installed
+

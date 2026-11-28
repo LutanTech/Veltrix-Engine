@@ -298,3 +298,244 @@ events:
       Microsoft (R) Incremental Linker Version 14.44.35230.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/Internal/CheckSourceCompiles.cmake:108 (try_compile)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/CheckCXXSourceCompiles.cmake:58 (cmake_check_source_compiles)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindThreads.cmake:99 (CHECK_CXX_SOURCE_COMPILES)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg/scripts/buildsystems/vcpkg.cmake:908 (_find_package)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "build-sdl/vcpkg_installed/x64-windows/share/lexbor/lexbor-config.cmake:28 (find_dependency)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg/scripts/buildsystems/vcpkg.cmake:908 (_find_package)"
+      - "CMakeLists.txt:14 (find_package)"
+    checks:
+      - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
+    directories:
+      source: "D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-2rccwg"
+      binary: "D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-2rccwg"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      VCPKG_INSTALLED_DIR: "D:/PYTHON/Veltrix Engine/build-sdl/vcpkg_installed"
+      VCPKG_PREFER_SYSTEM_LIBS: "OFF"
+      VCPKG_TARGET_TRIPLET: "x64-windows"
+      Z_VCPKG_ROOT_DIR: "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg"
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-2rccwg'
+        
+        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_4ba6a.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.14.60+43b635718 for .NET Framework
+        Build started 25-Nov-26 7:45:04 AM.
+        
+        Project "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_4ba6a.dir\\Debug\\".
+          Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+          Creating directory "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\Debug\\".
+          Creating directory "cmTC_4ba6a.dir\\Debug\\cmTC_4ba6a.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_4ba6a.dir\\Debug\\cmTC_4ba6a.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+          Touching "cmTC_4ba6a.dir\\Debug\\cmTC_4ba6a.tlog\\unsuccessfulbuild".
+        SetModuleDependencies:
+          Creating directory "cmTC_4ba6a.dir\\Debug\\cmTC_4ba6a_MD.tlog\\".
+          Scanning sources for module dependencies...
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_4ba6a.dir\\Debug\\\\" /scanDependencies "cmTC_4ba6a.dir\\Debug\\\\" /Fo"cmTC_4ba6a.dir\\Debug\\\\" /Fd"cmTC_4ba6a.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx"
+        D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx(1,10): fatal  error C1083: Cannot open include file: 'pthread.h': No such file or directory [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj]
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_4ba6a.dir\\Debug\\\\" /scanDependencies "cmTC_4ba6a.dir\\Debug\\\\" /Fo"cmTC_4ba6a.dir\\Debug\\\\" /Fd"cmTC_4ba6a.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx"
+          src.cxx
+        D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx(1,10): error C1083: Cannot open include file: 'pthread.h': No such file or directory [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj]
+        C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Microsoft\\VC\\v170\\Microsoft.CppCommon.targets(532,5): warning MSB8074: Cannot read Module Dependencies file cmTC_4ba6a.dir\\Debug\\src.cxx.module.json: Expecting element 'root' from namespace ''.. Encountered 'None'  with name '', namespace ''.  The build order might be incorrect. [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj]
+        ClCompile:
+          Compiling...
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_4ba6a.dir\\Debug\\\\" /Fo"cmTC_4ba6a.dir\\Debug\\\\" /Fd"cmTC_4ba6a.dir\\Debug\\vc143.pdb" /sourceDependencies "cmTC_4ba6a.dir\\Debug\\.d.json" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35230 for x64
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_4ba6a.dir\\Debug\\\\" /Fo"cmTC_4ba6a.dir\\Debug\\\\" /Fd"cmTC_4ba6a.dir\\Debug\\vc143.pdb" /sourceDependencies "cmTC_4ba6a.dir\\Debug\\.d.json" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx"
+          src.cxx
+        D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx(1,10): error C1083: Cannot open include file: 'pthread.h': No such file or directory [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj]
+        Done Building Project "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj" (default targets) -- FAILED.
+        
+        Build FAILED.
+        
+        "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj" (default target) (1) ->
+        (SetModuleDependencies target) -> 
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Microsoft\\VC\\v170\\Microsoft.CppCommon.targets(532,5): warning MSB8074: Cannot read Module Dependencies file cmTC_4ba6a.dir\\Debug\\src.cxx.module.json: Expecting element 'root' from namespace ''.. Encountered 'None'  with name '', namespace ''.  The build order might be incorrect. [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj]
+        
+        
+        "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj" (default target) (1) ->
+        (SetModuleDependencies target) -> 
+          D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx(1,10): fatal  error C1083: Cannot open include file: 'pthread.h': No such file or directory [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj]
+          D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx(1,10): error C1083: Cannot open include file: 'pthread.h': No such file or directory [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj]
+        
+        
+        "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj" (default target) (1) ->
+        (ClCompile target) -> 
+          D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\src.cxx(1,10): error C1083: Cannot open include file: 'pthread.h': No such file or directory [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-2rccwg\\cmTC_4ba6a.vcxproj]
+        
+            1 Warning(s)
+            3 Error(s)
+        
+        Time Elapsed 00:00:02.18
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/CheckLibraryExists.cmake:78 (try_compile)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindThreads.cmake:112 (CHECK_LIBRARY_EXISTS)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindThreads.cmake:175 (_threads_check_lib)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg/scripts/buildsystems/vcpkg.cmake:908 (_find_package)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "build-sdl/vcpkg_installed/x64-windows/share/lexbor/lexbor-config.cmake:28 (find_dependency)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg/scripts/buildsystems/vcpkg.cmake:908 (_find_package)"
+      - "CMakeLists.txt:14 (find_package)"
+    checks:
+      - "Looking for pthread_create in pthreads"
+    directories:
+      source: "D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-f23fjv"
+      binary: "D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-f23fjv"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      VCPKG_INSTALLED_DIR: "D:/PYTHON/Veltrix Engine/build-sdl/vcpkg_installed"
+      VCPKG_PREFER_SYSTEM_LIBS: "OFF"
+      VCPKG_TARGET_TRIPLET: "x64-windows"
+      Z_VCPKG_ROOT_DIR: "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg"
+    buildResult:
+      variable: "CMAKE_HAVE_PTHREADS_CREATE"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-f23fjv'
+        
+        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_2a434.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.14.60+43b635718 for .NET Framework
+        Build started 25-Nov-26 7:45:07 AM.
+        
+        Project "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\cmTC_2a434.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_2a434.dir\\Debug\\".
+          Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+          Creating directory "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\Debug\\".
+          Creating directory "cmTC_2a434.dir\\Debug\\cmTC_2a434.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_2a434.dir\\Debug\\cmTC_2a434.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+          Touching "cmTC_2a434.dir\\Debug\\cmTC_2a434.tlog\\unsuccessfulbuild".
+        SetModuleDependencies:
+          Creating directory "cmTC_2a434.dir\\Debug\\cmTC_2a434_MD.tlog\\".
+          Scanning sources for module dependencies...
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_2a434.dir\\Debug\\\\" /scanDependencies "cmTC_2a434.dir\\Debug\\\\" /Fo"cmTC_2a434.dir\\Debug\\\\" /Fd"cmTC_2a434.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\CheckFunctionExists.cxx"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35230 for x64
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_2a434.dir\\Debug\\\\" /scanDependencies "cmTC_2a434.dir\\Debug\\\\" /Fo"cmTC_2a434.dir\\Debug\\\\" /Fd"cmTC_2a434.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\CheckFunctionExists.cxx"
+          CheckFunctionExists.cxx
+        ClCompile:
+          Compiling...
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_2a434.dir\\Debug\\\\" /Fo"cmTC_2a434.dir\\Debug\\\\" /Fd"cmTC_2a434.dir\\Debug\\vc143.pdb" /sourceDependencies "cmTC_2a434.dir\\Debug\\.d.json" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\CheckFunctionExists.cxx"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35230 for x64
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_2a434.dir\\Debug\\\\" /Fo"cmTC_2a434.dir\\Debug\\\\" /Fd"cmTC_2a434.dir\\Debug\\vc143.pdb" /sourceDependencies "cmTC_2a434.dir\\Debug\\.d.json" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\CheckFunctionExists.cxx"
+          CheckFunctionExists.cxx
+        Link:
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\Debug\\cmTC_2a434.exe" /INCREMENTAL /ILK:"cmTC_2a434.dir\\Debug\\cmTC_2a434.ilk" /NOLOGO pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-f23fjv/Debug/cmTC_2a434.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-f23fjv/Debug/cmTC_2a434.lib" /MACHINE:X64  /machine:x64 cmTC_2a434.dir\\Debug\\CheckFunctionExists.obj
+        LINK : fatal error LNK1104: cannot open file 'pthreads.lib' [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\cmTC_2a434.vcxproj]
+        Done Building Project "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\cmTC_2a434.vcxproj" (default targets) -- FAILED.
+        
+        Build FAILED.
+        
+        "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\cmTC_2a434.vcxproj" (default target) (1) ->
+        (Link target) -> 
+          LINK : fatal error LNK1104: cannot open file 'pthreads.lib' [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-f23fjv\\cmTC_2a434.vcxproj]
+        
+            0 Warning(s)
+            1 Error(s)
+        
+        Time Elapsed 00:00:02.03
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/CheckLibraryExists.cmake:78 (try_compile)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindThreads.cmake:112 (CHECK_LIBRARY_EXISTS)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindThreads.cmake:176 (_threads_check_lib)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg/scripts/buildsystems/vcpkg.cmake:908 (_find_package)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "build-sdl/vcpkg_installed/x64-windows/share/lexbor/lexbor-config.cmake:28 (find_dependency)"
+      - "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg/scripts/buildsystems/vcpkg.cmake:908 (_find_package)"
+      - "CMakeLists.txt:14 (find_package)"
+    checks:
+      - "Looking for pthread_create in pthread"
+    directories:
+      source: "D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-se0eee"
+      binary: "D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-se0eee"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      VCPKG_INSTALLED_DIR: "D:/PYTHON/Veltrix Engine/build-sdl/vcpkg_installed"
+      VCPKG_PREFER_SYSTEM_LIBS: "OFF"
+      VCPKG_TARGET_TRIPLET: "x64-windows"
+      Z_VCPKG_ROOT_DIR: "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg"
+    buildResult:
+      variable: "CMAKE_HAVE_PTHREAD_CREATE"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-se0eee'
+        
+        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_c3e64.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild version 17.14.60+43b635718 for .NET Framework
+        Build started 25-Nov-26 7:45:10 AM.
+        
+        Project "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\cmTC_c3e64.vcxproj" on node 1 (default targets).
+        PrepareForBuild:
+          Creating directory "cmTC_c3e64.dir\\Debug\\".
+          Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+          Creating directory "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\Debug\\".
+          Creating directory "cmTC_c3e64.dir\\Debug\\cmTC_c3e64.tlog\\".
+        InitializeBuildStatus:
+          Creating "cmTC_c3e64.dir\\Debug\\cmTC_c3e64.tlog\\unsuccessfulbuild" because "AlwaysCreate" was specified.
+          Touching "cmTC_c3e64.dir\\Debug\\cmTC_c3e64.tlog\\unsuccessfulbuild".
+        SetModuleDependencies:
+          Creating directory "cmTC_c3e64.dir\\Debug\\cmTC_c3e64_MD.tlog\\".
+          Scanning sources for module dependencies...
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_c3e64.dir\\Debug\\\\" /scanDependencies "cmTC_c3e64.dir\\Debug\\\\" /Fo"cmTC_c3e64.dir\\Debug\\\\" /Fd"cmTC_c3e64.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\CheckFunctionExists.cxx"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35230 for x64
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_c3e64.dir\\Debug\\\\" /scanDependencies "cmTC_c3e64.dir\\Debug\\\\" /Fo"cmTC_c3e64.dir\\Debug\\\\" /Fd"cmTC_c3e64.dir\\Debug\\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\CheckFunctionExists.cxx"
+          CheckFunctionExists.cxx
+        ClCompile:
+          Compiling...
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_c3e64.dir\\Debug\\\\" /Fo"cmTC_c3e64.dir\\Debug\\\\" /Fd"cmTC_c3e64.dir\\Debug\\vc143.pdb" /sourceDependencies "cmTC_c3e64.dir\\Debug\\.d.json" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\CheckFunctionExists.cxx"
+          Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35230 for x64
+          Copyright (C) Microsoft Corporation.  All rights reserved.
+          cl /c /Zi /W1 /WX- /diagnostics:column /FS /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /ifcOutput "cmTC_c3e64.dir\\Debug\\\\" /Fo"cmTC_c3e64.dir\\Debug\\\\" /Fd"cmTC_c3e64.dir\\Debug\\vc143.pdb" /sourceDependencies "cmTC_c3e64.dir\\Debug\\.d.json" /external:W1 /Gd /TP /errorReport:queue "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\CheckFunctionExists.cxx"
+          CheckFunctionExists.cxx
+        Link:
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\Debug\\cmTC_c3e64.exe" /INCREMENTAL /ILK:"cmTC_c3e64.dir\\Debug\\cmTC_c3e64.ilk" /NOLOGO pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-se0eee/Debug/cmTC_c3e64.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/CMakeScratch/TryCompile-se0eee/Debug/cmTC_c3e64.lib" /MACHINE:X64  /machine:x64 cmTC_c3e64.dir\\Debug\\CheckFunctionExists.obj
+        LINK : fatal error LNK1104: cannot open file 'pthread.lib' [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\cmTC_c3e64.vcxproj]
+        Done Building Project "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\cmTC_c3e64.vcxproj" (default targets) -- FAILED.
+        
+        Build FAILED.
+        
+        "D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\cmTC_c3e64.vcxproj" (default target) (1) ->
+        (Link target) -> 
+          LINK : fatal error LNK1104: cannot open file 'pthread.lib' [D:\\PYTHON\\Veltrix Engine\\build-sdl\\CMakeFiles\\CMakeScratch\\TryCompile-se0eee\\cmTC_c3e64.vcxproj]
+        
+            0 Warning(s)
+            1 Error(s)
+        
+        Time Elapsed 00:00:02.32
+        
+      exitCode: 1
+...

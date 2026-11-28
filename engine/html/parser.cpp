@@ -1,185 +1,144 @@
+
 #include "parser.h"
-#include <cctype>
+#include <lexbor/html/html.h>
+#include <lexbor/html/serialize.h>
+#include <lexbor/dom/interfaces/element.h>
+#include <lexbor/dom/interfaces/attr.h>
+#include <iostream>
+#include <memory>
+#include <string>
 
 namespace Veltrix {
 
-Document HTMLParser::parse(const std::string& html) {
-    source = html;
-    position = 0;
+namespace {
 
-    Document document;
+std::unique_ptr<Node> convertNode(lxb_dom_node_t* source) {
+    if (!source) {
+        return nullptr;
+    }
 
-    while (position < source.size()) {
-        skipWhitespace();
+    lxb_dom_node_type_t type = lxb_dom_node_type(source);
 
-        if (position >= source.size()) {
-            break;
+    if (type == LXB_DOM_NODE_TYPE_TEXT) {
+        size_t length = 0;
+        const lxb_char_t* content = lxb_dom_node_text_content(source, &length);
+
+        auto node = std::make_unique<Node>(NodeType::Text);
+
+        if (content && length > 0) {
+            node->setText(std::string(reinterpret_cast<const char*>(content), length));
         }
 
-        if (source[position] == '<') {
-            document.setRoot(parseElement());
-            break;
-        }
-
-        ++position;
+        return node;
     }
 
-    return document;
-}
-
-void HTMLParser::skipWhitespace() {
-    while (position < source.size() &&
-           std::isspace(static_cast<unsigned char>(source[position]))) {
-        ++position;
-    }
-}
-
-std::string HTMLParser::parseTagName() {
-    std::string name;
-
-    while (position < source.size() &&
-           (std::isalnum(static_cast<unsigned char>(source[position])) ||
-            source[position] == '-' ||
-            source[position] == '_')) {
-        name += source[position++];
+    if (type != LXB_DOM_NODE_TYPE_ELEMENT) {
+        return nullptr;
     }
 
-    return name;
-}
+    auto element = lxb_dom_interface_element(source);
 
-std::string HTMLParser::parseAttributeName() {
-    std::string name;
+    size_t nameLength = 0;
+    const lxb_char_t* name = lxb_dom_element_local_name(element, &nameLength);
 
-    while (position < source.size() &&
-           (std::isalnum(static_cast<unsigned char>(source[position])) ||
-            source[position] == '-' ||
-            source[position] == '_')) {
-        name += source[position++];
+    if (!name || nameLength == 0) {
+        return nullptr;
     }
 
-    return name;
-}
+    auto node = std::make_unique<Node>(NodeType::Element);
+    node->setName(std::string(reinterpret_cast<const char*>(name), nameLength));
 
-std::string HTMLParser::parseAttributeValue() {
-    skipWhitespace();
+    for (
+        lxb_dom_attr_t* attr = lxb_dom_element_first_attribute(element);
+        attr;
+        attr = lxb_dom_element_next_attribute(attr)
+    ) {
+        size_t attrNameLength = 0;
+        size_t attrValueLength = 0;
 
-    if (position >= source.size()) {
-        return "";
-    }
+        const lxb_char_t* attrName = lxb_dom_attr_qualified_name(attr, &attrNameLength);
+        const lxb_char_t* attrValue = lxb_dom_attr_value(attr, &attrValueLength);
 
-    if (source[position] == '"' || source[position] == '\'') {
-        char quote = source[position++];
-        std::string value;
-
-        while (position < source.size() && source[position] != quote) {
-            value += source[position++];
-        }
-
-        if (position < source.size()) {
-            ++position;
-        }
-
-        return value;
-    }
-
-    std::string value;
-
-    while (position < source.size() &&
-           !std::isspace(static_cast<unsigned char>(source[position])) &&
-           source[position] != '>') {
-        value += source[position++];
-    }
-
-    return value;
-}
-
-std::string HTMLParser::parseText() {
-    std::string text;
-
-    while (position < source.size() && source[position] != '<') {
-        text += source[position++];
-    }
-
-    return text;
-}
-
-std::unique_ptr<Node> HTMLParser::parseElement() {
-    ++position;
-
-    std::string name = parseTagName();
-
-    auto element = std::make_unique<Node>(NodeType::Element);
-    element->setName(name);
-
-    while (position < source.size() && source[position] != '>') {
-        skipWhitespace();
-
-        if (position >= source.size() || source[position] == '>') {
-            break;
-        }
-
-        if (source[position] == '/') {
-            ++position;
+        if (!attrName) {
             continue;
         }
 
-        std::string attributeName = parseAttributeName();
-
-        if (attributeName.empty()) {
-            ++position;
-            continue;
-        }
-
-        skipWhitespace();
-
+        std::string attributeName(reinterpret_cast<const char*>(attrName), attrNameLength);
         std::string attributeValue;
 
-        if (position < source.size() && source[position] == '=') {
-            ++position;
-            attributeValue = parseAttributeValue();
+        if (attrValue && attrValueLength > 0) {
+            attributeValue.assign(reinterpret_cast<const char*>(attrValue), attrValueLength);
         }
 
-        element->setAttribute(attributeName, attributeValue);
+        node->setAttribute(attributeName, attributeValue);
     }
 
-    if (position < source.size() && source[position] == '>') {
-        ++position;
+    for (
+        lxb_dom_node_t* child = lxb_dom_node_first_child(source);
+        child;
+        child = lxb_dom_node_next(child)
+    ) {
+        auto convertedChild = convertNode(child);
+
+        if (convertedChild) {
+            node->appendChild(std::move(convertedChild));
+        }
     }
 
-    while (position < source.size()) {
-        if (source[position] == '<' &&
-            position + 1 < source.size() &&
-            source[position + 1] == '/') {
+    return node;
+}
 
-            position += 2;
+}
 
-            parseTagName();
+Document HTMLParser::parse(const std::string& html) {
+    Document result;
 
-            while (position < source.size() && source[position] != '>') {
-                ++position;
-            }
+    lxb_html_document_t* lexborDocument = lxb_html_document_create();
 
-            if (position < source.size()) {
-                ++position;
-            }
+    if (!lexborDocument) {
+        std::cerr << "[HTML] Failed to create Lexbor document\n";
+        return result;
+    }
 
+    lxb_status_t status = lxb_html_document_parse(
+        lexborDocument,
+        reinterpret_cast<const lxb_char_t*>(html.data()),
+        html.size()
+    );
+
+    if (status != LXB_STATUS_OK) {
+        std::cerr << "[HTML] Lexbor parsing failed: " << status << '\n';
+        lxb_html_document_destroy(lexborDocument);
+        return result;
+    }
+
+    lxb_dom_node_t* documentNode = lxb_dom_interface_node(lexborDocument);
+
+    lexbor_str_t serialized = {0};
+
+    if (lxb_html_serialize_pretty_deep_str(
+        documentNode,
+        LXB_HTML_SERIALIZE_OPT_WITHOUT_CLOSING,
+        2,
+        &serialized
+    ) == LXB_STATUS_OK && serialized.data) {
+        lexbor_str_destroy(&serialized, lexborDocument->dom_document.text, false);
+    }
+
+    for (
+        lxb_dom_node_t* child = lxb_dom_node_first_child(documentNode);
+        child;
+        child = lxb_dom_node_next(child)
+    ) {
+        if (lxb_dom_node_type(child) == LXB_DOM_NODE_TYPE_ELEMENT) {
+            result.setRoot(convertNode(child));
             break;
         }
-
-        if (source[position] == '<') {
-            element->appendChild(parseElement());
-        } else {
-            std::string text = parseText();
-
-            if (!text.empty()) {
-                auto textNode = std::make_unique<Node>(NodeType::Text);
-                textNode->setText(text);
-                element->appendChild(std::move(textNode));
-            }
-        }
     }
 
-    return element;
+    lxb_html_document_destroy(lexborDocument);
+
+    return result;
 }
 
 }

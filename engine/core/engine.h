@@ -1,6 +1,4 @@
-
 #pragma once
-
 #include <SDL3/SDL.h>
 #include "render/display_list.h"
 #include "render/text_renderer.h"
@@ -15,21 +13,77 @@ public:
     void shutdown();
 
 private:
-    bool running = false;
-
-    SDL_Window* window = nullptr;
-    SDL_Renderer* renderer = nullptr;
-
+    bool running=false;
+    SDL_Window* window=nullptr;
+    SDL_Renderer* renderer=nullptr;
+    SDL_Cursor* arrowCursor=nullptr;
+    SDL_Cursor* textCursor=nullptr;
     DisplayList displayList;
     TextRenderer textRenderer;
 
-    float scrollOffset = 0;
-    float contentHeight = 0;
-    float viewportHeight = 800;
-    float scrollSpeed = 48;
+    float scrollOffset=0;
+    float targetScrollOffset=0;
+    float contentHeight=0;
+    float viewportHeight=800;
+    float scrollSpeed=48;
+    float scrollSmoothing=14.0f;
+    float scrollbarWidth=10;
+    float scrollbarThumbHeight=0;
 
+    bool draggingScrollbar=false;
+    float dragStartY=0;
+    float dragStartScroll=0;
+    bool scrollbarHovered=false;
+    float scrollbarDragOffset=0;
+
+    bool textSelecting=false;
+    bool textFocus=false;
+    int selectionAnchorItem=-1;
+    size_t selectionAnchorOffset=0;
+    int selectionFocusItem=-1;
+    size_t selectionFocusOffset=0;
+    float selectionMouseX=0;
+    float selectionMouseY=0;
+
+    Uint64 lastClickTime=0;
+    float lastClickX=0;
+    float lastClickY=0;
+    int clickCount=0;
+    Uint64 caretStartTime=0;
+
+    void updateScrollbar();
+    void renderScrollbar();
+    void handleScrollbar(const SDL_Event& event);
     void updateContentHeight();
     void handleScroll(float amount);
+    void handleTextMouse(const SDL_Event& event);
+    void handleTextKeyboard(const SDL_Event& event);
+    void updateTextSelection();
+    void renderTextSelection();
+
+    float textWidth(const PaintText& text,size_t byteOffset);
+    size_t characterOffsetAt(const PaintText& text,float localX);
+    bool hitTestText(float mouseX,float mouseY,int& itemIndex,size_t& characterOffset);
+
+    void setTextCursor(bool text);
+    void clearSelection();
+    bool hasSelection() const;
+
+    void normalizeSelection(
+        int& startItem,size_t& startOffset,
+        int& endItem,size_t& endOffset
+    ) const;
+
+    std::string selectedText() const;
+    void selectWord(int itemIndex,size_t offset);
+    void selectLine(int itemIndex);
+    void moveCaretHorizontal(int direction,bool extend);
+    void moveCaretVertical(int direction,bool extend);
+    void moveCaretToDocumentStart(bool extend);
+    void moveCaretToDocumentEnd(bool extend);
+    void copySelection();
+    void renderTextItem(const PaintText& text,int itemIndex);
+    void renderCaret();
 };
 
 }

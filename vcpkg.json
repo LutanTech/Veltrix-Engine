@@ -3,6 +3,6 @@
     "version-string": "0.1.0",
     "builtin-baseline": "e1ff419d28c7f0a94abaf0a848fe0aeeb69b2de3",
     "dependencies": [
-        "sdl3"
-    ]
+        "sdl3",
+        "lexbor"    ]
 }

@@ -43,6 +43,7 @@ struct LayoutNode {
 
     float fontSize = 16;
     float lineHeight = 0;
+    float fontBaseline = 0;
 
     std::string display = "block";
 

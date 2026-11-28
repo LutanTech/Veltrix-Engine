@@ -1,148 +1,292 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Veltrix Rendering Test</title>
-
+    <meta charset="UTF-8">
+    <title>Veltrix Engine Stress Test</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            background: #111827;
-            color: #e5e7eb;
-            font-family: Arial;
+            font-family: Roboto;
             font-size: 16px;
-            padding: 24px;
+            color: #e8e0f5;
+            background: #171126;
         }
 
         h1 {
-            color: #a78bfa;
-            font-size: 36px;
-            margin-bottom: 12px;
+            color: #d49aff;
+            font-size: 38px;
         }
 
         h2 {
-            color: #60a5fa;
-            font-size: 24px;
+            color: #c58bfa;
+            font-size: 27px;
+        }
+
+        h3 {
+            color: #a97be8;
+            font-size: 21px;
         }
 
         p {
-            color: #d1d5db;
-            line-height: 1.6;
-            margin-bottom: 16px;
-        }
-
-        .card {
-            background-color: #1f2937;
-            border: 2px solid #374151;
-            padding: 20px;
-            margin-bottom: 20px;
-            width: 600px;
-        }
-
-        .highlight {
-            color: #facc15;
-        }
-
-        .button {
-            background-color: #7c3aed;
-            color: white;
-            padding: 10px;
-            border: 2px solid #a78bfa;
-        }
-
-        ul {
-            color: #34d399;
-        }
-
-        li {
-            margin-bottom: 8px;
-        }
-
-        #special {
-            color: #fb7185;
+            font-size: 16px;
         }
 
         .small {
             font-size: 12px;
+            color: #bca9d6;
+        }
+
+        .large {
+            font-size: 28px;
+            color: #f0c4ff;
+        }
+
+        .highlight {
+            color: #ffb86c;
+        }
+
+        .success {
+            color: #7ee787;
+        }
+
+        .danger {
+            color: #ff7b72;
+        }
+
+        .blue {
+            color: #79c0ff;
+        }
+
+        .section {
+            font-size: 18px;
+        }
+
+        .muted {
+            color: #9688aa;
+        }
+
+        strong {
+            color: #ffffff;
+        }
+
+        em {
+            color: #d2a8ff;
         }
     </style>
 </head>
-
 <body>
 
-    <h1>Veltrix Engine</h1>
+    <h1>Veltrix Rendering Engine</h1>
 
-    <p>
-        Engineered to render. A browser rendering engine
-        built from the ground up.
+    <p class="large">
+        A custom HTML rendering engine built from the ground up.
     </p>
 
-    <div class="card">
-        <h2>Typography Test</h2>
+    <p>
+        This document tests HTML parsing, CSS selectors, text layout,
+        font rendering, inline formatting and smooth scrolling.
+    </p>
 
+    <h2>1. Introduction</h2>
+
+    <p>
+        Veltrix is an experimental browser rendering engine designed
+        to understand HTML documents and transform them into visual
+        content through a custom rendering pipeline.
+    </p>
+
+    <p>
+        The engine processes HTML using a parser, constructs a document
+        tree, calculates styles, creates layout structures and finally
+        produces a display list that is rendered through SDL.
+    </p>
+
+    <p>
+        <strong>Important:</strong>
+        HTML is not simply a collection of strings.
+        It represents a structured document containing elements,
+        attributes, nested content and relationships.
+    </p>
+
+    <h2>2. Typography Testing</h2>
+
+    <h3>Different Font Sizes</h3>
+
+    <p class="small">This is a small 12px text sample.</p>
+
+    <p>This is a normal 16px text sample.</p>
+
+    <p class="large">This is a large 28px text sample.</p>
+
+    <h3>Inline Formatting</h3>
+
+    <p>
+        This paragraph contains
+        <strong>bold text</strong>,
+        <em>italic text</em>,
+        <span class="highlight">highlighted text</span>,
+        <span class="success">success text</span> and
+        <span class="danger">danger text</span>.
+    </p>
+
+    <p>
+        Nested formatting:
+        <strong>
+            Bold text containing
+            <em>italic text containing
+                <span class="blue">blue text</span>
+            </em>
+        </strong>
+    </p>
+
+    <p>
+        Multiple inline elements should remain on the same line
+        whenever enough horizontal space is available.
+    </p>
+
+    <h2>3. CSS Class Testing</h2>
+
+    <p class="small">Class selector: small</p>
+    <p class="large">Class selector: large</p>
+    <p class="highlight">Class selector: highlight</p>
+    <p class="success">Class selector: success</p>
+    <p class="danger">Class selector: danger</p>
+    <p class="blue">Class selector: blue</p>
+
+    <h2>4. Long Paragraph Testing</h2>
+
+    <p>
+        A rendering engine must correctly calculate the dimensions
+        of every element and determine where content should appear
+        within the viewport. Text wrapping is particularly important
+        because a paragraph may contain hundreds or thousands of
+        characters. The layout system must identify available width,
+        calculate glyph advances, account for whitespace and determine
+        when a new line should begin.
+    </p>
+
+    <p>
+        When inline elements are nested inside paragraphs, the engine
+        must preserve their formatting while maintaining the correct
+        position of every character. A bold word should not cause the
+        following text to overlap. A smaller font should not create
+        unexpected gaps. Whitespace between adjacent elements should
+        remain consistent.
+    </p>
+
+    <p>
+        Scrolling introduces another important requirement. The
+        document can be much taller than the visible window. The
+        rendering engine must preserve document coordinates while
+        translating visible content according to the current scroll
+        position. Elements outside the viewport should not needlessly
+        consume rendering resources.
+    </p>
+
+    <h2>5. Nested Elements</h2>
+
+    <div>
         <p>
-            This paragraph contains enough text to test
-            whether Veltrix can measure text and wrap words
-            correctly when the available width is limited.
-            Every line should stay within its container.
+            This paragraph is inside a div element.
         </p>
 
-        <p>
-            Normal text,
-            <span class="highlight">highlighted text</span>,
-            and <strong>bold text</strong>.
-        </p>
+        <div>
+            <p>
+                This paragraph is inside a nested div element.
+            </p>
+
+            <div>
+                <p>
+                    This paragraph is inside a third level of nesting.
+                </p>
+            </div>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>CSS Styling Test</h2>
+    <h2>6. Repeated Content</h2>
 
-        <p id="special">
-            This paragraph uses an ID selector.
-        </p>
+    <h3>Section One</h3>
 
-        <p class="small">
-            This paragraph uses a smaller font size.
-        </p>
+    <p>
+        The first section contains information about document
+        processing, element construction and rendering operations.
+    </p>
 
-        <p>
-            This card tests backgrounds, borders, padding
-            and margins.
-        </p>
-    </div>
+    <p>
+        Every element should be positioned according to its computed
+        styles and the dimensions of its parent container.
+    </p>
 
-    <div class="card">
-        <h2>List Test</h2>
+    <h3>Section Two</h3>
 
-        <ul>
-            <li>HTML parsing</li>
-            <li>CSS parsing</li>
-            <li>Style computation</li>
-            <li>Layout calculation</li>
-            <li>Display list generation</li>
-            <li>SDL rendering</li>
-        </ul>
-    </div>
+    <p>
+        The second section contains additional text to increase
+        document height and test scrolling performance.
+    </p>
 
-    <div class="card">
-        <h2>Inline Content</h2>
+    <p>
+        The engine should maintain a consistent visual position
+        when the user scrolls down and then returns to the beginning.
+    </p>
 
-        <p>
-            Veltrix supports
-            <span class="highlight">inline elements</span>
-            inside paragraphs, with
-            <strong>different styles</strong>
-            applied to individual elements.
-        </p>
+    <h3>Section Three</h3>
 
-        <p>
-            The quick brown fox jumps over the lazy dog.
-            0123456789
-        </p>
-    </div>
+    <p>
+        Rendering performance depends on efficient memory management,
+        texture reuse, visibility checks and avoiding unnecessary
+        operations during each frame.
+    </p>
+
+    <h2>7. Unicode Testing</h2>
+
+    <p>
+        English, numbers 1234567890, punctuation ! ? @ # $ % &
+        and accented characters: café, naïve, résumé.
+    </p>
+
+    <p>
+        Unicode symbols: © ® ™ € £ ¥ → ← ↑ ↓ ★ ✓
+    </p>
+
+    <h2>8. Long Text Block</h2>
+
+    <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Integer nec odio. Praesent libero. Sed cursus ante dapibus
+        diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet.
+        Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed
+        augue semper porta. Mauris massa. Vestibulum lacinia arcu
+        eget nulla. Class aptent taciti sociosqu ad litora torquent
+        per conubia nostra, per inceptos himenaeos.
+    </p>
+
+    <p>
+        Curabitur sodales ligula in libero. Sed dignissim lacinia nunc.
+        Curabitur tortor. Pellentesque nibh. Aenean quam. In
+        scelerisque sem at dolor. Maecenas mattis. Sed convallis
+        tristique sem. Proin ut ligula vel nunc egestas porttitor.
+        Morbi lectus risus, iaculis vel, suscipit quis, luctus non,
+        massa.
+    </p>
+
+    <p>
+        Fusce ac turpis quis ligula lacinia aliquet. Mauris ipsum.
+        Nulla metus metus, ullamcorper vel, tincidunt sed, euismod
+        in, nibh. Quisque volutpat condimentum velit. Class aptent
+        taciti sociosqu ad litora torquent per conubia nostra,
+        per inceptos himenaeos.
+    </p>
+
+    <h2>9. Final Rendering Test</h2>
+
+    <p class="large success">
+        If you can read this at the bottom of the document,
+        scrolling is working!
+    </p>
+
+    <p class="muted">
+        Veltrix Engine | HTML Rendering Test | Version 1.0
+    </p>
 
 </body>
 </html>

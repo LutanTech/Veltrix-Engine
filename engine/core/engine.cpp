@@ -1,172 +1,805 @@
-
 #include "engine.h"
 #include <algorithm>
+#include <cmath>
+#include <cctype>
+#include <limits>
+#include <string>
 
 namespace Veltrix {
 
-bool Engine::initialize() {
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        return false;
-    }
+namespace {
 
-    window = SDL_CreateWindow(
-        "Veltrix | Engineered to render.",
-        1280,
-        800,
-        SDL_WINDOW_RESIZABLE
-    );
+bool isUtf8Continuation(unsigned char c){return(c&0xC0)==0x80;}
 
-    if (!window) {
-        SDL_Quit();
-        return false;
-    }
+size_t nextUtf8(const std::string& text,size_t offset){
+    if(offset>=text.size())return text.size();
+    unsigned char c=static_cast<unsigned char>(text[offset]);
+    size_t length=1;
+    if((c&0x80)==0)length=1;
+    else if((c&0xE0)==0xC0)length=2;
+    else if((c&0xF0)==0xE0)length=3;
+    else if((c&0xF8)==0xF0)length=4;
+    if(offset+length>text.size())return text.size();
+    for(size_t i=1;i<length;++i)
+        if(!isUtf8Continuation(static_cast<unsigned char>(text[offset+i])))return offset+1;
+    return offset+length;
+}
 
-    renderer = SDL_CreateRenderer(window, nullptr);
+size_t previousUtf8(const std::string& text,size_t offset){
+    if(offset==0||text.empty())return 0;
+    size_t position=offset-1;
+    while(position>0&&isUtf8Continuation(static_cast<unsigned char>(text[position])))--position;
+    return position;
+}
 
-    if (!renderer) {
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return false;
-    }
+bool isWordCharacter(const std::string& text,size_t offset){
+    if(offset>=text.size())return false;
+    size_t next=nextUtf8(text,offset);
+    if(next==offset)return false;
+    unsigned char c=static_cast<unsigned char>(text[offset]);
+    return c<128?std::isalnum(c)||c=='_':true;
+}
 
-    if (!textRenderer.initialize(
-        renderer,
-        "assets/fonts/Roboto-Regular.ttf"
-    )) {
+bool isWhitespaceCharacter(const std::string& text,size_t offset){
+    if(offset>=text.size())return false;
+    unsigned char c=static_cast<unsigned char>(text[offset]);
+    return c<128?std::isspace(c):false;
+}
+
+}
+
+bool Engine::initialize(){
+    if(!SDL_Init(SDL_INIT_VIDEO))return false;
+    SDL_DisplayID display=SDL_GetPrimaryDisplay();
+    const SDL_DisplayMode* mode=SDL_GetCurrentDisplayMode(display);
+    int width=mode?static_cast<int>(mode->w*.85f):1100;
+    int height=mode?static_cast<int>(mode->h*.85f):700;
+    window=SDL_CreateWindow("Veltrix | Engineered to render.",width,height,SDL_WINDOW_RESIZABLE);
+    if(!window){SDL_Quit();return false;}
+    renderer=SDL_CreateRenderer(window,nullptr);
+    if(!renderer){SDL_DestroyWindow(window);SDL_Quit();return false;}
+    if(!textRenderer.initialize(renderer,"assets/fonts/Roboto-Regular.ttf")){
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
         return false;
     }
-
-    running = true;
+    arrowCursor=SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
+    textCursor=SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_TEXT);
+    running=true;
     return true;
 }
 
-void Engine::setDisplayList(const DisplayList& list) {
-    displayList = list;
+void Engine::setDisplayList(const DisplayList& list){
+    displayList=list;
+    scrollOffset=0;
+    targetScrollOffset=0;
+    clearSelection();
     updateContentHeight();
-    scrollOffset = 0;
 }
 
-void Engine::updateContentHeight() {
-    contentHeight = 0;
-
-    for (const auto& rect : displayList.rectangles()) {
-        contentHeight = std::max(
-            contentHeight,
-            rect.y + rect.height
-        );
+void Engine::updateContentHeight(){
+    contentHeight=0;
+    for(const auto& rect:displayList.rectangles())
+        contentHeight=std::max(contentHeight,rect.y+rect.height);
+    for(const auto& text:displayList.texts()){
+        float h=textRenderer.lineHeight(text.size);
+        contentHeight=std::max(contentHeight,text.y+h*.25f);
     }
-
-    for (const auto& text : displayList.texts()) {
-        contentHeight = std::max(
-            contentHeight,
-            text.y + text.size
-        );
-    }
-
-    int width = 0;
-    int height = 0;
-
-    if (window && SDL_GetWindowSize(window, &width, &height)) {
-        viewportHeight = static_cast<float>(height);
-    }
-
-    scrollOffset = std::clamp(
-        scrollOffset,
-        0.0f,
-        std::max(0.0f, contentHeight - viewportHeight)
-    );
+    int width=0,height=0;
+    if(window&&SDL_GetWindowSize(window,&width,&height))
+        viewportHeight=static_cast<float>(height);
+    float maxScroll=std::max(0.0f,contentHeight-viewportHeight);
+    scrollOffset=std::clamp(scrollOffset,0.0f,maxScroll);
+    targetScrollOffset=std::clamp(targetScrollOffset,0.0f,maxScroll);
 }
 
-void Engine::handleScroll(float amount) {
-    scrollOffset -= amount * scrollSpeed;
-
-    scrollOffset = std::clamp(
-        scrollOffset,
-        0.0f,
-        std::max(0.0f, contentHeight - viewportHeight)
-    );
+void Engine::handleScroll(float amount){
+    float maxScroll=std::max(0.0f,contentHeight-viewportHeight);
+    targetScrollOffset=std::clamp(targetScrollOffset-amount*scrollSpeed,0.0f,maxScroll);
 }
 
-void Engine::run() {
+void Engine::setTextCursor(bool text){
+    SDL_Cursor* cursor=text?textCursor:arrowCursor;
+    if(cursor)SDL_SetCursor(cursor);
+}
+
+float Engine::textWidth(const PaintText& text,size_t byteOffset){
+    return textRenderer.measureText(text.text.substr(0,std::min(byteOffset,text.text.size())),text.size);
+}
+
+size_t Engine::characterOffsetAt(const PaintText& text,float localX){
+    if(text.text.empty()||localX<=0)return 0;
+    size_t offset=0;
+    while(offset<text.text.size()){
+        size_t next=nextUtf8(text.text,offset);
+        float left=textWidth(text,offset);
+        float right=textWidth(text,next);
+        if(localX<left+(right-left)*.5f)return offset;
+        offset=next;
+    }
+    return text.text.size();
+}
+
+bool Engine::hitTestText(float mouseX,float mouseY,int& itemIndex,size_t& characterOffset){
+    const auto& texts=displayList.texts();
+    float bestVertical=std::numeric_limits<float>::max();
+    float bestHorizontal=std::numeric_limits<float>::max();
+    int bestItem=-1;
+    size_t bestOffset=0;
+
+    for(size_t i=0;i<texts.size();++i){
+        const auto& text=texts[i];
+        float h=textRenderer.lineHeight(text.size);
+        float top=text.y-scrollOffset-h*.82f;
+        float bottom=text.y-scrollOffset+h*.25f;
+        float verticalDistance=mouseY<top?top-mouseY:mouseY>bottom?mouseY-bottom:0;
+        if(verticalDistance>h*.75f||verticalDistance>bestVertical)continue;
+
+        float width=textWidth(text,text.text.size());
+        float localX=mouseX-text.x;
+        float horizontalDistance=localX<0?-localX:localX>width?localX-width:0;
+
+        if(verticalDistance<bestVertical||(verticalDistance==bestVertical&&horizontalDistance<bestHorizontal)){
+            bestVertical=verticalDistance;
+            bestHorizontal=horizontalDistance;
+            bestItem=static_cast<int>(i);
+            bestOffset=characterOffsetAt(text,std::clamp(localX,0.0f,width));
+        }
+    }
+
+    if(bestItem<0)return false;
+    itemIndex=bestItem;
+    characterOffset=bestOffset;
+    return true;
+}
+
+void Engine::clearSelection(){
+    textSelecting=false;
+    textFocus=false;
+    selectionAnchorItem=-1;
+    selectionAnchorOffset=0;
+    selectionFocusItem=-1;
+    selectionFocusOffset=0;
+}
+
+bool Engine::hasSelection() const{
+    return selectionAnchorItem>=0&&selectionFocusItem>=0&&
+        (selectionAnchorItem!=selectionFocusItem||selectionAnchorOffset!=selectionFocusOffset);
+}
+
+void Engine::normalizeSelection(int& startItem,size_t& startOffset,int& endItem,size_t& endOffset) const{
+    startItem=selectionAnchorItem;
+    startOffset=selectionAnchorOffset;
+    endItem=selectionFocusItem;
+    endOffset=selectionFocusOffset;
+    if(startItem>endItem||(startItem==endItem&&startOffset>endOffset)){
+        std::swap(startItem,endItem);
+        std::swap(startOffset,endOffset);
+    }
+}
+
+std::string Engine::selectedText() const{
+    if(!hasSelection())return "";
+    int startItem,endItem;
+    size_t startOffset,endOffset;
+    normalizeSelection(startItem,startOffset,endItem,endOffset);
+    const auto& texts=displayList.texts();
+    if(startItem<0||endItem<0||startItem>=static_cast<int>(texts.size())||endItem>=static_cast<int>(texts.size()))return "";
+    std::string result;
+    for(int i=startItem;i<=endItem;++i){
+        const std::string& value=texts[i].text;
+        size_t from=i==startItem?startOffset:0;
+        size_t to=i==endItem?endOffset:value.size();
+        from=std::min(from,value.size());
+        to=std::min(to,value.size());
+        if(from>to)std::swap(from,to);
+        result+=value.substr(from,to-from);
+        if(i!=endItem)result+='\n';
+    }
+    return result;
+}
+
+void Engine::copySelection(){
+    if(!hasSelection())return;
+    std::string value=selectedText();
+    if(!value.empty())SDL_SetClipboardText(value.c_str());
+}
+
+void Engine::selectWord(int itemIndex,size_t offset){
+    const auto& texts=displayList.texts();
+    if(itemIndex<0||itemIndex>=static_cast<int>(texts.size()))return;
+    const std::string& text=texts[itemIndex].text;
+    offset=std::min(offset,text.size());
+    if(offset==text.size()&&offset>0)offset=previousUtf8(text,offset);
+    if(offset>=text.size()){
+        selectionAnchorItem=selectionFocusItem=itemIndex;
+        selectionAnchorOffset=selectionFocusOffset=text.size();
+        return;
+    }
+    bool word=isWordCharacter(text,offset);
+    bool whitespace=isWhitespaceCharacter(text,offset);
+    size_t start=offset,end=nextUtf8(text,offset);
+    while(start>0){
+        size_t previous=previousUtf8(text,start);
+        if(isWordCharacter(text,previous)!=word||isWhitespaceCharacter(text,previous)!=whitespace)break;
+        start=previous;
+    }
+    while(end<text.size()){
+        if(isWordCharacter(text,end)!=word||isWhitespaceCharacter(text,end)!=whitespace)break;
+        end=nextUtf8(text,end);
+    }
+    selectionAnchorItem=selectionFocusItem=itemIndex;
+    selectionAnchorOffset=start;
+    selectionFocusOffset=end;
+    textFocus=true;
+    caretStartTime=SDL_GetTicks();
+}
+
+void Engine::selectLine(int itemIndex){
+    const auto& texts=displayList.texts();
+    if(itemIndex<0||itemIndex>=static_cast<int>(texts.size()))return;
+
+    int start=itemIndex,end=itemIndex;
+    float lineHeight=textRenderer.lineHeight(texts[itemIndex].size);
+
+    while(start>0){
+        const auto& current=texts[start];
+        const auto& previous=texts[start-1];
+        float gap=current.y-previous.y;
+        float expected=(lineHeight+textRenderer.lineHeight(previous.size))*.5f;
+        if(gap>expected*1.8f)break;
+        --start;
+    }
+
+    while(end+1<static_cast<int>(texts.size())){
+        const auto& current=texts[end];
+        const auto& next=texts[end+1];
+        float gap=next.y-current.y;
+        float expected=(textRenderer.lineHeight(current.size)+textRenderer.lineHeight(next.size))*.5f;
+        if(gap>expected*1.8f)break;
+        ++end;
+    }
+
+    selectionAnchorItem=start;
+    selectionAnchorOffset=0;
+    selectionFocusItem=end;
+    selectionFocusOffset=texts[end].text.size();
+    textFocus=true;
+    caretStartTime=SDL_GetTicks();
+}
+
+
+
+void Engine::handleTextMouse(const SDL_Event& event){
+    if(event.type==SDL_EVENT_MOUSE_MOTION){
+        selectionMouseX=event.motion.x;
+        selectionMouseY=event.motion.y;
+        int itemIndex;
+        size_t offset;
+        if(hitTestText(event.motion.x,event.motion.y,itemIndex,offset))setTextCursor(true);
+        else if(!textSelecting)setTextCursor(false);
+        if(textSelecting)updateTextSelection();
+        return;
+    }
+
+    if(event.type==SDL_EVENT_MOUSE_BUTTON_DOWN&&event.button.button==SDL_BUTTON_LEFT){
+        float mouseX=event.button.x,mouseY=event.button.y;
+        selectionMouseX=mouseX;
+        selectionMouseY=mouseY;
+        int itemIndex;
+        size_t offset;
+        if(!hitTestText(mouseX,mouseY,itemIndex,offset)){
+            clearSelection();
+            setTextCursor(false);
+            return;
+        }
+        setTextCursor(true);
+        Uint64 now=SDL_GetTicks();
+        float dx=mouseX-lastClickX,dy=mouseY-lastClickY;
+        clickCount=(now-lastClickTime<=500&&std::abs(dx)<5&&std::abs(dy)<5)?clickCount+1:1;
+        lastClickTime=now;
+        lastClickX=mouseX;
+        lastClickY=mouseY;
+        bool shift=(SDL_GetModState()&SDL_KMOD_SHIFT)!=0;
+
+        if(clickCount>=3){
+            selectLine(itemIndex);
+            textSelecting=false;
+            clickCount=0;
+            return;
+        }
+
+        if(clickCount==2){
+            selectWord(itemIndex,offset);
+            textSelecting=false;
+            return;
+        }
+
+        textFocus=true;
+        caretStartTime=SDL_GetTicks();
+
+        if(shift&&selectionAnchorItem>=0){
+            selectionFocusItem=itemIndex;
+            selectionFocusOffset=offset;
+        }else{
+            selectionAnchorItem=itemIndex;
+            selectionAnchorOffset=offset;
+            selectionFocusItem=itemIndex;
+            selectionFocusOffset=offset;
+        }
+
+        textSelecting=true;
+        return;
+    }
+
+    if(event.type==SDL_EVENT_MOUSE_BUTTON_UP&&event.button.button==SDL_BUTTON_LEFT){
+        if(textSelecting){
+            updateTextSelection();
+            textSelecting=false;
+            caretStartTime=SDL_GetTicks();
+        }
+    }
+}
+
+void Engine::updateTextSelection(){
+    if(!textSelecting)return;
+    int itemIndex;
+    size_t offset;
+    if(hitTestText(selectionMouseX,selectionMouseY,itemIndex,offset)){
+        selectionFocusItem=itemIndex;
+        selectionFocusOffset=offset;
+        caretStartTime=SDL_GetTicks();
+    }
+    if(selectionMouseY<20)handleScroll(2.0f);
+    else if(selectionMouseY>viewportHeight-20)handleScroll(-2.0f);
+}
+
+void Engine::renderTextSelection(){
+    if(!hasSelection())return;
+    int startItem,endItem;
+    size_t startOffset,endOffset;
+    normalizeSelection(startItem,startOffset,endItem,endOffset);
+    const auto& texts=displayList.texts();
+    if(startItem<0||endItem>=static_cast<int>(texts.size()))return;
+
+    SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer,75,105,220,180);
+
+    for(int i=startItem;i<=endItem;++i){
+        const auto& text=texts[i];
+        size_t from=i==startItem?startOffset:0;
+        size_t to=i==endItem?endOffset:text.text.size();
+        from=std::min(from,text.text.size());
+        to=std::min(to,text.text.size());
+        if(from==to)continue;
+        float x=text.x+textWidth(text,from);
+        float width=textWidth(text,to)-textWidth(text,from);
+        float h=textRenderer.lineHeight(text.size);
+        SDL_FRect rect{x,text.y-scrollOffset-h*.82f,std::max(width,1.0f),h};
+        SDL_RenderFillRect(renderer,&rect);
+    }
+
+    SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_NONE);
+}
+
+void Engine::renderTextItem(const PaintText& text,int itemIndex){
+    if(itemIndex<0||!hasSelection()){
+        PaintText visible=text;
+        visible.y-=scrollOffset;
+        textRenderer.render(visible);
+        return;
+    }
+
+    int startItem,endItem;
+    size_t startOffset,endOffset;
+    normalizeSelection(startItem,startOffset,endItem,endOffset);
+
+    if(itemIndex<startItem||itemIndex>endItem){
+        PaintText visible=text;
+        visible.y-=scrollOffset;
+        textRenderer.render(visible);
+        return;
+    }
+
+    size_t from=itemIndex==startItem?startOffset:0;
+    size_t to=itemIndex==endItem?endOffset:text.text.size();
+    from=std::min(from,text.text.size());
+    to=std::min(to,text.text.size());
+    if(from>to)std::swap(from,to);
+
+    if(from>0){
+        PaintText before=text;
+        before.text=text.text.substr(0,from);
+        before.y-=scrollOffset;
+        textRenderer.render(before);
+    }
+
+    if(from<to){
+        PaintText selected=text;
+        selected.x+=textWidth(text,from);
+        selected.text=text.text.substr(from,to-from);
+        selected.y-=scrollOffset;
+        selected.color={255,255,255,255};
+        textRenderer.render(selected);
+    }
+
+    if(to<text.text.size()){
+        PaintText after=text;
+        after.x+=textWidth(text,to);
+        after.text=text.text.substr(to);
+        after.y-=scrollOffset;
+        textRenderer.render(after);
+    }
+}
+
+void Engine::renderCaret(){
+    if(!textFocus||textSelecting||hasSelection())return;
+    if(selectionFocusItem<0||selectionFocusItem>=static_cast<int>(displayList.texts().size()))return;
+    Uint64 elapsed=SDL_GetTicks()-caretStartTime;
+    if((elapsed/530)%2==0)return;
+
+    const auto& text=displayList.texts()[selectionFocusItem];
+    float x=text.x+textWidth(text,selectionFocusOffset);
+    float h=textRenderer.lineHeight(text.size);
+    float baseline=text.y-scrollOffset;
+
+    SDL_SetRenderDrawColor(renderer,220,220,235,255);
+    SDL_FRect caret{x,baseline-h*.82f,1.5f,h};
+    SDL_RenderFillRect(renderer,&caret);
+}
+
+void Engine::moveCaretHorizontal(int direction,bool extend){
+    if(displayList.texts().empty())return;
+
+    if(!extend&&hasSelection()){
+        int startItem,endItem;
+        size_t startOffset,endOffset;
+        normalizeSelection(startItem,startOffset,endItem,endOffset);
+        if(direction<0){
+            selectionAnchorItem=selectionFocusItem=startItem;
+            selectionAnchorOffset=selectionFocusOffset=startOffset;
+        }else{
+            selectionAnchorItem=selectionFocusItem=endItem;
+            selectionAnchorOffset=selectionFocusOffset=endOffset;
+        }
+        caretStartTime=SDL_GetTicks();
+        return;
+    }
+
+    if(selectionFocusItem<0){
+        selectionFocusItem=0;
+        selectionFocusOffset=0;
+    }
+
+    int item=selectionFocusItem;
+    size_t offset=selectionFocusOffset;
+
+    if(direction<0){
+        if(offset>0)offset=previousUtf8(displayList.texts()[item].text,offset);
+        else if(item>0){
+            --item;
+            offset=displayList.texts()[item].text.size();
+        }
+    }else{
+        const auto& value=displayList.texts()[item].text;
+        if(offset<value.size())offset=nextUtf8(value,offset);
+        else if(item+1<static_cast<int>(displayList.texts().size())){
+            ++item;
+            offset=0;
+        }
+    }
+
+    selectionFocusItem=item;
+    selectionFocusOffset=offset;
+
+    if(!extend){
+        selectionAnchorItem=item;
+        selectionAnchorOffset=offset;
+    }
+
+    caretStartTime=SDL_GetTicks();
+}
+
+void Engine::moveCaretVertical(int direction,bool extend){
+    if(displayList.texts().empty())return;
+
+    if(selectionFocusItem<0){
+        selectionFocusItem=0;
+        selectionFocusOffset=0;
+    }
+
+    int current=selectionFocusItem;
+    int target=std::clamp(current+direction,0,static_cast<int>(displayList.texts().size()-1));
+    const auto& currentText=displayList.texts()[current];
+    float desiredX=currentText.x+textWidth(currentText,selectionFocusOffset);
+    const auto& targetText=displayList.texts()[target];
+    size_t offset=characterOffsetAt(targetText,desiredX-targetText.x);
+
+    selectionFocusItem=target;
+    selectionFocusOffset=offset;
+
+    if(!extend){
+        selectionAnchorItem=target;
+        selectionAnchorOffset=offset;
+    }
+
+    caretStartTime=SDL_GetTicks();
+}
+
+void Engine::moveCaretToDocumentStart(bool extend){
+    if(displayList.texts().empty())return;
+    selectionFocusItem=0;
+    selectionFocusOffset=0;
+    if(!extend){
+        selectionAnchorItem=0;
+        selectionAnchorOffset=0;
+    }
+    caretStartTime=SDL_GetTicks();
+}
+
+void Engine::moveCaretToDocumentEnd(bool extend){
+    if(displayList.texts().empty())return;
+    int item=static_cast<int>(displayList.texts().size()-1);
+    selectionFocusItem=item;
+    selectionFocusOffset=displayList.texts()[item].text.size();
+    if(!extend){
+        selectionAnchorItem=item;
+        selectionAnchorOffset=selectionFocusOffset;
+    }
+    caretStartTime=SDL_GetTicks();
+}
+
+void Engine::handleTextKeyboard(const SDL_Event& event){
+    if(event.type!=SDL_EVENT_KEY_DOWN||!textFocus)return;
+
+    SDL_Keymod mods=SDL_GetModState();
+    bool shift=(mods&SDL_KMOD_SHIFT)!=0;
+    bool ctrl=(mods&SDL_KMOD_CTRL)!=0;
+
+    if(ctrl&&event.key.key==SDLK_A){
+        if(!displayList.texts().empty()){
+            selectionAnchorItem=0;
+            selectionAnchorOffset=0;
+            selectionFocusItem=static_cast<int>(displayList.texts().size()-1);
+            selectionFocusOffset=displayList.texts().back().text.size();
+            caretStartTime=SDL_GetTicks();
+        }
+        return;
+    }
+
+    if(ctrl&&event.key.key==SDLK_C){
+        copySelection();
+        return;
+    }
+
+    switch(event.key.key){
+        case SDLK_LEFT:moveCaretHorizontal(-1,shift);break;
+        case SDLK_RIGHT:moveCaretHorizontal(1,shift);break;
+        case SDLK_UP:moveCaretVertical(-1,shift);break;
+        case SDLK_DOWN:moveCaretVertical(1,shift);break;
+        case SDLK_HOME:moveCaretToDocumentStart(shift);break;
+        case SDLK_END:moveCaretToDocumentEnd(shift);break;
+        case SDLK_ESCAPE:clearSelection();break;
+        default:return;
+    }
+
+    textSelecting=false;
+}
+
+void Engine::run(){
     SDL_Event event;
+    Uint64 previousCounter=SDL_GetPerformanceCounter();
+    double frequency=static_cast<double>(SDL_GetPerformanceFrequency());
+    if(frequency<=0)frequency=1;
 
-    while (running) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                running = false;
-            }
+    while(running){
+        while(SDL_PollEvent(&event)){
+            if(event.type==SDL_EVENT_QUIT)running=false;
 
-            if (event.type == SDL_EVENT_MOUSE_WHEEL) {
-                float amount = event.wheel.y;
-
-                if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
-                    amount = -amount;
-                }
-
+            if(event.type==SDL_EVENT_MOUSE_WHEEL){
+                float amount=event.wheel.y;
+                if(event.wheel.direction==SDL_MOUSEWHEEL_FLIPPED)amount=-amount;
                 handleScroll(amount);
             }
+
+            handleTextKeyboard(event);
+            handleScrollbar(event);
+            handleTextMouse(event);
         }
 
-        int windowWidth = 0;
-        int windowHeight = 0;
+        if(textSelecting)updateTextSelection();
 
-        if (SDL_GetWindowSize(window, &windowWidth, &windowHeight)) {
-            viewportHeight = static_cast<float>(windowHeight);
+        Uint64 currentCounter=SDL_GetPerformanceCounter();
+        double deltaTime=static_cast<double>(currentCounter-previousCounter)/frequency;
+        previousCounter=currentCounter;
+        deltaTime=std::clamp(deltaTime,0.0,0.05);
+
+        int windowWidth=0,windowHeight=0;
+        if(SDL_GetWindowSize(window,&windowWidth,&windowHeight))
+            viewportHeight=static_cast<float>(windowHeight);
+
+        float maxScroll=std::max(0.0f,contentHeight-viewportHeight);
+        targetScrollOffset=std::clamp(targetScrollOffset,0.0f,maxScroll);
+        scrollOffset=std::clamp(scrollOffset,0.0f,maxScroll);
+
+        if(!draggingScrollbar){
+            float smoothing=static_cast<float>(1.0-std::exp(-scrollSmoothing*deltaTime));
+            scrollOffset+=(targetScrollOffset-scrollOffset)*smoothing;
+            if(std::abs(targetScrollOffset-scrollOffset)<.1f)scrollOffset=targetScrollOffset;
         }
 
-        scrollOffset = std::clamp(
-            scrollOffset,
-            0.0f,
-            std::max(0.0f, contentHeight - viewportHeight)
-        );
-
-        SDL_SetRenderDrawColor(renderer, 23, 17, 38, 255);
+        SDL_SetRenderDrawColor(renderer,23,17,38,255);
         SDL_RenderClear(renderer);
 
-        for (const auto& rect : displayList.rectangles()) {
-            SDL_SetRenderDrawColor(
-                renderer,
-                rect.color.r,
-                rect.color.g,
-                rect.color.b,
-                rect.color.a
-            );
+        for(const auto& rect:displayList.rectangles()){
+            float y=rect.y-scrollOffset;
+            if(y+rect.height<=0||y>=viewportHeight)continue;
 
-            SDL_FRect destination{
-                rect.x,
-                rect.y - scrollOffset,
-                rect.width,
-                rect.height
-            };
-
-            SDL_RenderFillRect(renderer, &destination);
+            SDL_SetRenderDrawColor(renderer,rect.color.r,rect.color.g,rect.color.b,rect.color.a);
+            SDL_FRect destination{rect.x,y,rect.width,rect.height};
+            SDL_RenderFillRect(renderer,&destination);
         }
 
-        for (const auto& text : displayList.texts()) {
-            PaintText visibleText = text;
-            visibleText.y -= scrollOffset;
+        renderTextSelection();
 
-            textRenderer.render(visibleText);
+        const auto& texts=displayList.texts();
+
+        for(size_t i=0;i<texts.size();++i){
+            const auto& text=texts[i];
+            float h=textRenderer.lineHeight(text.size);
+            float top=text.y-h*.82f-scrollOffset;
+            float bottom=text.y+h*.25f-scrollOffset;
+            if(bottom<=0||top>=viewportHeight)continue;
+            renderTextItem(text,static_cast<int>(i));
         }
 
+        renderCaret();
+        renderScrollbar();
         SDL_RenderPresent(renderer);
     }
 }
 
-void Engine::shutdown() {
-    textRenderer.shutdown();
-
-    if (renderer) {
-        SDL_DestroyRenderer(renderer);
-        renderer = nullptr;
+void Engine::updateScrollbar(){
+    if(contentHeight<=0){
+        scrollbarThumbHeight=0;
+        return;
     }
 
-    if (window) {
+    scrollbarThumbHeight=std::min(
+        static_cast<float>(SDL_max(35,static_cast<int>(viewportHeight*viewportHeight/contentHeight))),
+        viewportHeight
+    );
+}
+
+void Engine::renderScrollbar(){
+    if(contentHeight<=viewportHeight||contentHeight<=0)return;
+
+    int windowWidth=0,windowHeight=0;
+    SDL_GetWindowSize(window,&windowWidth,&windowHeight);
+
+    float trackHeight=static_cast<float>(windowHeight);
+
+    scrollbarThumbHeight=std::max(35.0f,trackHeight*viewportHeight/contentHeight);
+    scrollbarThumbHeight=std::min(scrollbarThumbHeight,trackHeight);
+
+    float maxScroll=contentHeight-viewportHeight;
+    float thumbY=(trackHeight-scrollbarThumbHeight)*(scrollOffset/maxScroll);
+
+    SDL_SetRenderDrawColor(renderer,45,38,62,255);
+
+    SDL_FRect track{
+        static_cast<float>(windowWidth)-scrollbarWidth,
+        0,
+        scrollbarWidth,
+        trackHeight
+    };
+
+    SDL_RenderFillRect(renderer,&track);
+
+    if(draggingScrollbar)
+        SDL_SetRenderDrawColor(renderer,210,145,255,255);
+    else if(scrollbarHovered)
+        SDL_SetRenderDrawColor(renderer,190,125,245,255);
+    else
+        SDL_SetRenderDrawColor(renderer,125,85,165,255);
+
+    SDL_FRect thumb{
+        static_cast<float>(windowWidth)-scrollbarWidth,
+        thumbY,
+        scrollbarWidth,
+        scrollbarThumbHeight
+    };
+
+    SDL_RenderFillRect(renderer,&thumb);
+}
+
+void Engine::handleScrollbar(const SDL_Event& event){
+    int windowWidth=0,windowHeight=0;
+    SDL_GetWindowSize(window,&windowWidth,&windowHeight);
+
+    float trackHeight=static_cast<float>(windowHeight);
+
+    if(contentHeight<=viewportHeight||contentHeight<=0){
+        draggingScrollbar=false;
+        scrollbarHovered=false;
+        return;
+    }
+
+    updateScrollbar();
+
+    float maxScroll=contentHeight-viewportHeight;
+    float maxThumbPosition=trackHeight-scrollbarThumbHeight;
+    if(maxThumbPosition<=0)return;
+
+    float thumbY=maxThumbPosition*(scrollOffset/maxScroll);
+
+    if(event.type==SDL_EVENT_MOUSE_MOTION){
+        float mouseX=event.motion.x,mouseY=event.motion.y;
+
+        scrollbarHovered=
+            mouseX>=windowWidth-scrollbarWidth&&
+            mouseX<=windowWidth;
+
+        if(draggingScrollbar){
+            float thumbPosition=mouseY-scrollbarDragOffset;
+            scrollOffset=std::clamp(
+                thumbPosition/maxThumbPosition*maxScroll,
+                0.0f,
+                maxScroll
+            );
+            targetScrollOffset=scrollOffset;
+        }
+    }
+
+    if(event.type==SDL_EVENT_MOUSE_BUTTON_DOWN&&event.button.button==SDL_BUTTON_LEFT){
+        float mouseX=event.button.x,mouseY=event.button.y;
+
+        if(mouseX>=windowWidth-scrollbarWidth&&mouseX<=windowWidth){
+            if(mouseY>=thumbY&&mouseY<=thumbY+scrollbarThumbHeight){
+                draggingScrollbar=true;
+                scrollbarDragOffset=mouseY-thumbY;
+            }else{
+                float targetPosition=mouseY-scrollbarThumbHeight/2;
+                scrollOffset=std::clamp(
+                    targetPosition/maxThumbPosition*maxScroll,
+                    0.0f,
+                    maxScroll
+                );
+                targetScrollOffset=scrollOffset;
+                draggingScrollbar=true;
+                scrollbarDragOffset=scrollbarThumbHeight/2;
+            }
+        }
+    }
+
+    if(event.type==SDL_EVENT_MOUSE_BUTTON_UP&&event.button.button==SDL_BUTTON_LEFT){
+        draggingScrollbar=false;
+        targetScrollOffset=scrollOffset;
+    }
+}
+
+void Engine::shutdown(){
+    textRenderer.shutdown();
+
+    if(arrowCursor){
+        SDL_DestroyCursor(arrowCursor);
+        arrowCursor=nullptr;
+    }
+
+    if(textCursor){
+        SDL_DestroyCursor(textCursor);
+        textCursor=nullptr;
+    }
+
+    if(renderer){
+        SDL_DestroyRenderer(renderer);
+        renderer=nullptr;
+    }
+
+    if(window){
         SDL_DestroyWindow(window);
-        window = nullptr;
+        window=nullptr;
     }
 
     SDL_Quit();

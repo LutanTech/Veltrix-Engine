@@ -5,6 +5,8 @@
 #include <tuple>
 #include <unordered_set>
 #include <vector>
+#include "parser.h"
+#include <iostream>
 
 namespace Veltrix {
 
@@ -1244,6 +1246,33 @@ void StyleEngine::apply(
              matched.rule->style.allProperties()) {
             if (name.rfind("--", 0) == 0) {
                 variables[name] = value;
+            }
+        }
+    }
+
+    if (node->type() == NodeType::Element) {
+        std::string classes = node->attribute("class");
+    
+    }
+    if (node->hasAttribute("style")) {
+        CSSParser inlineParser;
+        auto inlineRules = inlineParser.parse("*{" + node->attribute("style") + "}");
+    
+        if (!inlineRules.empty()) {
+            for (const auto& [name, value] : inlineRules.front().style.allProperties()) {
+                if (name.rfind("--", 0) == 0) {
+                    variables[name] = value;
+                    node->setCustomProperty(name, value);
+                    continue;
+                }
+    
+                std::string resolved = resolveVariables(value, variables);
+    
+                if (resolved == "inherit" || resolved == "initial" || resolved == "unset") {
+                    continue;
+                }
+    
+                node->setComputedStyle(name, resolved);
             }
         }
     }

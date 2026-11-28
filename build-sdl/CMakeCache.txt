@@ -419,6 +419,9 @@ freetype_IS_TOP_LEVEL:STATIC=OFF
 //Value Computed by CMake
 freetype_SOURCE_DIR:STATIC=D:/PYTHON/Veltrix Engine/freetype-2.15.0
 
+//The directory containing a CMake configuration file for lexbor.
+lexbor_DIR:PATH=D:/PYTHON/Veltrix Engine/build-sdl/vcpkg_installed/x64-windows/share/lexbor
+
 
 ########################
 # INTERNAL cache entries
@@ -496,6 +499,12 @@ CMAKE_GENERATOR_INSTANCE:INTERNAL=C:/Program Files (x86)/Microsoft Visual Studio
 CMAKE_GENERATOR_PLATFORM:INTERNAL=
 //Name of generator toolset.
 CMAKE_GENERATOR_TOOLSET:INTERNAL=
+//Test CMAKE_HAVE_LIBC_PTHREAD
+CMAKE_HAVE_LIBC_PTHREAD:INTERNAL=
+//Have library pthreads
+CMAKE_HAVE_PTHREADS_CREATE:INTERNAL=
+//Have library pthread
+CMAKE_HAVE_PTHREAD_CREATE:INTERNAL=
 //Source directory with the top level CMakeLists.txt file for this
 // project
 CMAKE_HOME_DIRECTORY:INTERNAL=D:/PYTHON/Veltrix Engine
@@ -598,6 +607,8 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 CPACK_SOURCE_7Z-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CPACK_SOURCE_ZIP
 CPACK_SOURCE_ZIP-ADVANCED:INTERNAL=1
+//Details about finding Threads
+FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 PC_BROTLIDEC_CFLAGS:INTERNAL=
 PC_BROTLIDEC_CFLAGS_I:INTERNAL=
 PC_BROTLIDEC_CFLAGS_OTHER:INTERNAL=

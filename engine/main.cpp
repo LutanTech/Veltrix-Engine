@@ -5,7 +5,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-
+#include <unordered_set>
 #include "core/engine.h"
 #include "html/parser.h"
 #include "css/parser.h"
@@ -14,31 +14,49 @@
 #include "render/display_list.h"
 #include "render/display_list_builder.h"
 
+
 void printNode(const Veltrix::Node* node, int depth = 0) {
     if (!node) return;
 
     std::string indentation(depth * 2, ' ');
 
-    if (node->type() == Veltrix::NodeType::Element) {
-        std::cout << indentation << "<" << node->name();
-
-        for (const std::string& attribute : {"id", "class", "lang"}) {
-            if (node->hasAttribute(attribute)) {
-                std::cout << " " << attribute << "=\"" << node->attribute(attribute) << "\"";
-            }
-        }
-
-        std::cout << ">\n";
-    }
-
     if (node->type() == Veltrix::NodeType::Text) {
         std::cout << indentation << node->text() << "\n";
+        return;
     }
+
+    if (node->type() != Veltrix::NodeType::Element) {
+        for (const auto& child : node->children()) {
+            printNode(child.get(), depth);
+        }
+        return;
+    }
+
+    std::cout << indentation << "<" << node->name();
+
+    for (const std::string& attribute : {"id", "class", "lang"}) {
+        if (node->hasAttribute(attribute)) {
+            std::cout << " " << attribute << "=\"" << node->attribute(attribute) << "\"";
+        }
+    }
+
+    std::cout << ">\n";
 
     for (const auto& child : node->children()) {
         printNode(child.get(), depth + 1);
     }
+
+    static const std::unordered_set<std::string> voidElements = {
+        "area", "base", "br", "col", "embed", "hr",
+        "img", "input", "link", "meta", "param",
+        "source", "track", "wbr"
+    };
+
+    if (!voidElements.contains(node->name())) {
+        std::cout << indentation << "</" << node->name() << ">\n";
+    }
 }
+
 
 std::string readFile(const std::string& path) {
     std::ifstream file(path);
@@ -92,7 +110,6 @@ int main() {
         std::string html = readFile("index.html");
         auto document = parser.parse(html);
 
-        std::cout << "[VelHTML] Document parsed.\n";
 
         std::string css;
 
@@ -100,14 +117,9 @@ int main() {
 
         auto rules = cssParser.parse(css);
 
-        std::cout << "[VelCSS] Extracted "
-                  << rules.size()
-                  << " CSS rule(s) from HTML.\n";
-
         Veltrix::StyleEngine styleEngine;
         styleEngine.compute(document, rules);
 
-        std::cout << "[VelCSS] Computed styles.\n";
 
         Veltrix::LayoutEngine layoutEngine;
         auto layout = layoutEngine.build(document.root(), 1280);
@@ -116,7 +128,6 @@ int main() {
             throw std::runtime_error("Could not build layout tree.");
         }
 
-        std::cout << "[VelLayout] Layout tree:\n";
 
         std::function<void(const Veltrix::LayoutNode*, int)> printLayout =
             [&](const Veltrix::LayoutNode* node, int depth) {
@@ -124,16 +135,6 @@ int main() {
 
                 std::string indentation(depth * 2, ' ');
 
-                if (node->domNode->type() == Veltrix::NodeType::Element) {
-                    std::cout << indentation
-                              << node->domNode->name()
-                              << " x=" << node->x
-                              << " y=" << node->y
-                              << " width=" << node->width
-                              << " height=" << node->height
-                              << " font-size=" << node->fontSize
-                              << "\n";
-                }
 
                 for (const auto& child : node->children) {
                     printLayout(child.get(), depth + 1);
@@ -142,10 +143,7 @@ int main() {
 
         printLayout(layout.get(), 0);
 
-        std::cout << "[VelHTML] Parsed document:\n";
-        printNode(document.root());
 
-        std::cout << "[VelRender] Building display list...\n";
 
         Veltrix::DisplayListBuilder displayListBuilder;
         Veltrix::DisplayList displayList = displayListBuilder.build(layout.get());

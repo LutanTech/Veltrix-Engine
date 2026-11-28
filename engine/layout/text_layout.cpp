@@ -104,6 +104,7 @@ void TextLayout::appendWord(
     }
 }
 
+
 std::vector<TextLine> TextLayout::wrap(
     const std::string& text,
     float availableWidth,
@@ -116,30 +117,6 @@ std::vector<TextLine> TextLayout::wrap(
 
     for (size_t position = 0; position < text.size();) {
         unsigned char c = static_cast<unsigned char>(text[position]);
-
-        if (c == '\r' || c == '\n') {
-            appendWord(
-                lines,
-                current,
-                word,
-                availableWidth,
-                fontSize
-            );
-
-            word.clear();
-
-            if (c == '\r' &&
-                position + 1 < text.size() &&
-                text[position + 1] == '\n') {
-                ++position;
-            }
-
-            lines.push_back(std::move(current));
-            current = {};
-
-            ++position;
-            continue;
-        }
 
         if (std::isspace(c)) {
             appendWord(
@@ -176,5 +153,6 @@ std::vector<TextLine> TextLayout::wrap(
 
     return lines;
 }
+
 
 }
