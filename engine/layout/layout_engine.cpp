@@ -741,7 +741,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             contentAvailableWidth>0?
                 contentAvailableWidth:
                 availableWidth,
-            heightValue.empty()||heightValue=="auto"?0.0f:(heightValue.find('%')!=std::string::npos?availableHeight*parseNumber(heightValue)/100.0f:parseNumber(heightValue,availableHeight)),
+            heightValue.empty()||heightValue=="auto"?availableHeight:(heightValue.find('%')!=std::string::npos?availableHeight*parseNumber(heightValue)/100.0f:parseNumber(heightValue,availableHeight)),
             layout->fontSize,
             layout->fontWeight
         );
