@@ -71,6 +71,7 @@ bool Engine::initialize(){
     }
     arrowCursor=SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
     textCursor=SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_TEXT);
+    linkCursor=SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER);
     running=true;
     return true;
 }
@@ -295,6 +296,14 @@ void Engine::handleTextMouse(const SDL_Event& event){
     if(event.type==SDL_EVENT_MOUSE_MOTION){
         selectionMouseX=event.motion.x;
         selectionMouseY=event.motion.y;
+        for(auto it=displayList.elements().rbegin();it!=displayList.elements().rend();++it){
+            if(it->type!=PaintElementType::Link)continue;
+            float y=it->y-scrollOffset;
+            if(event.motion.x>=it->x&&event.motion.x<=it->x+it->width&&event.motion.y>=y&&event.motion.y<=y+it->height){
+                if(linkCursor)SDL_SetCursor(linkCursor);
+                return;
+            }
+        }
         for(const auto& element:displayList.elements()){
             if(element.type!=PaintElementType::Input&&element.type!=PaintElementType::Button)continue;
             float y=element.y-scrollOffset;
@@ -315,6 +324,18 @@ void Engine::handleTextMouse(const SDL_Event& event){
         float mouseX=event.button.x,mouseY=event.button.y;
         selectionMouseX=mouseX;
         selectionMouseY=mouseY;
+        for(auto it=displayList.elements().rbegin();it!=displayList.elements().rend();++it){
+            if(it->type!=PaintElementType::Link)continue;
+            float y=it->y-scrollOffset;
+            if(mouseX>=it->x&&mouseX<=it->x+it->width&&mouseY>=y&&mouseY<=y+it->height){
+                clearSelection();
+                textSelecting=false;
+                textFocus=false;
+                setTextCursor(false);
+                if(!it->value.empty())SDL_OpenURL(it->value.c_str());
+                return;
+            }
+        }
         for(const auto& element:displayList.elements()){
             if(element.type!=PaintElementType::Button)continue;
             float y=element.y-scrollOffset;
@@ -930,10 +951,11 @@ void Engine::renderFrame(){
     bool cursorResolved=false;
     const auto& cursorElements=displayList.elements();
     for(auto it=cursorElements.rbegin();it!=cursorElements.rend();++it){
-        if(it->type!=PaintElementType::Input&&it->type!=PaintElementType::Button)continue;
+        if(it->type!=PaintElementType::Input&&it->type!=PaintElementType::Button&&it->type!=PaintElementType::Link)continue;
         float y=it->y-scrollOffset;
         if(cursorX>=it->x&&cursorX<=it->x+it->width&&cursorY>=y&&cursorY<=y+it->height){
-            setTextCursor(it->type==PaintElementType::Input);
+            if(it->type==PaintElementType::Link&&linkCursor)SDL_SetCursor(linkCursor);
+            else setTextCursor(it->type==PaintElementType::Input);
             cursorResolved=true;
             break;
         }
@@ -1052,6 +1074,11 @@ void Engine::renderFrame(){
         float bottom=text.y+h*.25f-scrollOffset;
         if(bottom<=0||top>=viewportHeight)continue;
         renderTextItem(text,static_cast<int>(i));
+        if(text.underline){
+            float width=textRenderer.measureText(text.text,text.size);
+            SDL_SetRenderDrawColor(renderer,text.color.r,text.color.g,text.color.b,text.color.a);
+            SDL_RenderLine(renderer,text.x,text.y+2-scrollOffset,text.x+width,text.y+2-scrollOffset);
+        }
     }
     
     renderCaret();
@@ -1246,6 +1273,7 @@ void Engine::shutdown(){
         SDL_DestroyCursor(textCursor);
         textCursor=nullptr;
     }
+    if(linkCursor){SDL_DestroyCursor(linkCursor);linkCursor=nullptr;}
 
     if(renderer){
         SDL_DestroyRenderer(renderer);
