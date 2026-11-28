@@ -1054,28 +1054,29 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         );
 
         float verticalExtent=std::max(
-            item->lineHeight+
-            alignmentOffset,
+            item->height+alignmentOffset,
             referenceLineHeight
         );
-
+        
         flow.lineHeight=std::max(
             flow.lineHeight,
             verticalExtent+
             item->marginTop+
             item->marginBottom
         );
-
+        
+        flow.x=std::max(
+            flow.x,
+            elementOriginX+item->width
+        );
+        
         flow.maximumWidth=std::max(
             flow.maximumWidth,
             flow.x
         );
-
-        flow.x+=
-            item->paddingRight+
-            item->borderRight+
-            item->marginRight;
-    };
+        
+        flow.x+=item->marginRight;
+        };
 
     for(const auto& child:layout->children){
         if(!child||child->display=="none")
