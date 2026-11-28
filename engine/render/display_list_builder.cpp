@@ -261,7 +261,7 @@ const std::unordered_map<std::string, uint32_t>& namedColors() {
 }
 DisplayList DisplayListBuilder::build(const LayoutNode* root) {
  DisplayList displayList;
- buildNode(root, displayList, 0, 0, "black");
+ buildNode(root, displayList, 0, 0, "black", 400);
  return displayList;
 }
 
