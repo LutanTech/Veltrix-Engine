@@ -302,6 +302,7 @@ void DisplayListBuilder::buildNode(
         if(backgroundColor.a>0&&node->width>0&&node->height>0)
             displayList.addRect(absoluteX,absoluteY,node->width,node->height,backgroundColor);
 
+        bool control=tag=="input"||tag=="button"||tag=="textarea"||tag=="select";
         std::string border=domNode->computedStyle("border");
         const std::string sides[4]={"top","right","bottom","left"};
         const float widths[4]={node->borderTop,node->borderRight,node->borderBottom,node->borderLeft};
@@ -321,7 +322,7 @@ void DisplayListBuilder::buildNode(
             borderStyles[i]=domNode->computedStyle(std::string("border-")+sides[i]+"-style");
             if(borderStyles[i].empty())borderStyles[i]=borderBoxValue(commonStyle,i);
             if(borderStyles[i].empty())borderStyles[i]=shorthandStyle;
-            if(borderStyles[i].empty())borderStyles[i]="none";
+            if(borderStyles[i].empty())borderStyles[i]=control&&node->borderTop>0?"solid":"none";
         }
         addBorders(
             displayList,absoluteX,absoluteY,node->width,node->height,
