@@ -332,7 +332,15 @@ void Engine::handleTextMouse(const SDL_Event& event){
                 textSelecting=false;
                 textFocus=false;
                 setTextCursor(false);
-                if(!it->value.empty())SDL_OpenURL(it->value.c_str());
+                if(!it->value.empty()&&it->value[0]=='#'){
+                    std::string target=it->value.substr(1);
+                    for(const auto& anchor:displayList.elements()){
+                        if(anchor.type==PaintElementType::Anchor&&anchor.value==target){
+                            targetScrollOffset=std::clamp(anchor.y,0.0f,std::max(0.0f,contentHeight-viewportHeight));
+                            break;
+                        }
+                    }
+                }else if(!it->value.empty())SDL_OpenURL(it->value.c_str());
                 return;
             }
         }
@@ -1073,11 +1081,20 @@ void Engine::renderFrame(){
         float top=text.y-h*.82f-scrollOffset;
         float bottom=text.y+h*.25f-scrollOffset;
         if(bottom<=0||top>=viewportHeight)continue;
-        renderTextItem(text,static_cast<int>(i));
-        if(text.underline){
-            float width=textRenderer.measureText(text.text,text.size);
-            SDL_SetRenderDrawColor(renderer,text.color.r,text.color.g,text.color.b,text.color.a);
-            SDL_RenderLine(renderer,text.x,text.y+2-scrollOffset,text.x+width,text.y+2-scrollOffset);
+        PaintText visibleText=text;
+        float pointerX=0,pointerY=0;
+        SDL_GetMouseState(&pointerX,&pointerY);
+        for(const auto& link:displayList.elements()){
+            float linkY=link.y-scrollOffset;
+            if(link.type==PaintElementType::Link&&link.textColor.a>0&&pointerX>=link.x&&pointerX<=link.x+link.width&&pointerY>=linkY&&pointerY<=linkY+link.height){
+                if(text.x>=link.x&&text.x<=link.x+link.width)visibleText.color=link.textColor;
+            }
+        }
+        renderTextItem(visibleText,static_cast<int>(i));
+        if(visibleText.underline){
+            float width=textRenderer.measureText(visibleText.text,visibleText.size);
+            SDL_SetRenderDrawColor(renderer,visibleText.color.r,visibleText.color.g,visibleText.color.b,visibleText.color.a);
+            SDL_RenderLine(renderer,visibleText.x,visibleText.y+2-scrollOffset,visibleText.x+width,visibleText.y+2-scrollOffset);
         }
     }
     
