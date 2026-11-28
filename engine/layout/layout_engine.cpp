@@ -507,6 +507,38 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         layout->borderLeft
     );
 
+    bool control=tag=="input"||tag=="button"||tag=="textarea"||tag=="select";
+    bool hasPadding=
+        !node->computedStyle("padding").empty()||
+        !node->computedStyle("padding-top").empty()||
+        !node->computedStyle("padding-right").empty()||
+        !node->computedStyle("padding-bottom").empty()||
+        !node->computedStyle("padding-left").empty();
+    bool hasBorder=
+        !node->computedStyle("border").empty()||
+        !node->computedStyle("border-width").empty()||
+        !node->computedStyle("border-top-width").empty()||
+        !node->computedStyle("border-right-width").empty()||
+        !node->computedStyle("border-bottom-width").empty()||
+        !node->computedStyle("border-left-width").empty();
+
+    if(control&&!hasPadding){
+        if(tag=="input"||tag=="select"){
+            layout->paddingTop=4;
+            layout->paddingRight=6;
+            layout->paddingBottom=4;
+            layout->paddingLeft=6;
+        }else{
+            layout->paddingTop=5;
+            layout->paddingRight=10;
+            layout->paddingBottom=5;
+            layout->paddingLeft=10;
+        }
+    }
+
+    if(control&&!hasBorder)
+        layout->borderTop=layout->borderRight=layout->borderBottom=layout->borderLeft=1;
+
     std::string value;
 
     value=node->computedStyle("margin-top");
@@ -554,6 +586,8 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         layout->borderBottom;
 
     std::string boxSizing=node->computedStyle("box-sizing");
+    if(control&&boxSizing.empty())
+        boxSizing="border-box";
     std::string widthValue=node->computedStyle("width");
     std::string heightValue=node->computedStyle("height");
 
