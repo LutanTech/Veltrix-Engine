@@ -1310,6 +1310,11 @@ void StyleEngine::apply(
         }
     }
 
+    if(node->type()==NodeType::Element&&node->name()=="a"){
+        if(node->computedStyle("color").empty())node->setComputedStyle("color","#0000ee");
+        if(node->computedStyle("text-decoration").empty())node->setComputedStyle("text-decoration","underline");
+    }
+
     std::string color =
         node->computedStyle("color");
 
