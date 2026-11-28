@@ -252,7 +252,9 @@ const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
     return &result.first->second;
 }
 
-void TextRenderer::render(const PaintText& text) {
+void TextRenderer::render(const PaintText& text){renderRange(text,0,text.text.size());}
+
+void TextRenderer::renderRange(const PaintText& text,size_t start,size_t end){
     if (!renderer || !fontManager.face()) {
         return;
     }
@@ -274,6 +276,7 @@ void TextRenderer::render(const PaintText& text) {
     FT_UInt previousGlyph = 0;
 
     for (size_t position = 0; position < text.text.size();) {
+        size_t glyphStart=position;
         uint32_t codepoint =
             nextCodepoint(text.text, position);
 
@@ -320,7 +323,7 @@ void TextRenderer::render(const PaintText& text) {
             }
         }
 
-        if (glyph->texture) {
+        if (glyphStart>=start&&glyphStart<end&&glyph->texture) {
             float width = 0;
             float height = 0;
 
