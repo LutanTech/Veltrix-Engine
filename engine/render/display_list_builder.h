@@ -17,7 +17,8 @@ private:
         float parentX,
         float parentY,
         const std::string& inheritedColor,
-        int inheritedWeight
+        int inheritedWeight,
+        bool insideButton
     );
 
     Color parseColor(
