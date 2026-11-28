@@ -19,6 +19,10 @@ float parseNumber(const std::string& value,float fallback=0){
     return end==value.c_str()?fallback:result;
 }
 
+float collapseMargins(float a,float b){
+    return std::max(a,b)+std::min(std::min(a,b),0.0f);
+}
+
 std::string lower(const std::string& value){
     std::string result=value;
     std::transform(result.begin(),result.end(),result.begin(),
@@ -960,6 +964,9 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             item->borderTop;
 
         flow.x=childOriginX;
+
+        float previousBlockMargin=0;
+        bool previousBlock=false;
 
         for(const auto& child:item->children){
             if(!child||child->display=="none")
