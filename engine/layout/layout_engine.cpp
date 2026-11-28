@@ -246,11 +246,12 @@ void LayoutEngine::shutdown(){
     fontAttempted=true;
 }
 
-float LayoutEngine::measureText(const std::string& text,float fontSize){
+float LayoutEngine::measureText(const std::string& text,float fontSize,int fontWeight){
     if(fontReady){
         return fontManager.measureText(
             text,
-            static_cast<unsigned int>(std::max(1.0f,fontSize))
+            static_cast<unsigned int>(std::max(1.0f,fontSize)),
+            static_cast<unsigned int>(std::max(100,fontWeight))
         );
     }
 
@@ -377,13 +378,14 @@ std::unique_ptr<LayoutNode> LayoutEngine::build(Node* root,float viewportWidth){
     if(!fontAttempted)
         initialize("assets/fonts/Roboto-Regular.ttf");
 
-    return buildNode(root,viewportWidth,16);
+    return buildNode(root,viewportWidth,16,400);
 }
 
 std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
     Node* node,
     float availableWidth,
-    float inheritedFontSize
+    float inheritedFontSize,
+    int inheritedFontWeight
 ){
     if(!node)return nullptr;
 
@@ -391,6 +393,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
     layout->domNode=node;
     layout->fontSize=inheritedFontSize;
+    layout->fontWeight=inheritedFontWeight;
     layout->lineHeight=inheritedFontSize*1.2f;
 
     if(node->type()==NodeType::Text){
@@ -440,6 +443,12 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
     if(layout->fontSize<=0)
         layout->fontSize=inheritedFontSize;
+
+    std::string fontWeightValue=node->computedStyle("font-weight");
+    if(fontWeightValue=="bold")layout->fontWeight=700;
+    else if(fontWeightValue=="normal")layout->fontWeight=400;
+    else if(!fontWeightValue.empty())layout->fontWeight=static_cast<int>(parseNumber(fontWeightValue,inheritedFontWeight));
+    else if(tag=="h1"||tag=="h2"||tag=="h3"||tag=="h4"||tag=="h5"||tag=="h6")layout->fontWeight=700;
 
     layout->lineHeight=layout->fontSize*1.2f;
 
@@ -687,7 +696,8 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             contentAvailableWidth>0?
                 contentAvailableWidth:
                 availableWidth,
-            layout->fontSize
+            layout->fontSize,
+            layout->fontWeight
         );
 
         if(!childLayout||childLayout->display=="none")
@@ -766,12 +776,14 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
                 float wordWidth=measureText(
                     word,
-                    item->fontSize
+                    item->fontSize,
+                    item->fontWeight
                 );
 
                 float spaceWidth=measureText(
                     " ",
-                    item->fontSize
+                    item->fontSize,
+                    item->fontWeight
                 );
 
                 if(flow.pendingSpace&&flow.x>0){
@@ -804,7 +816,8 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
                         float characterWidth=measureText(
                             character,
-                            item->fontSize
+                            item->fontSize,
+                            item->fontWeight
                         );
 
                         if(flow.x>0&&
