@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdint>
 #include <unordered_map>
+#include <utility>
 
 #include "font_manager.h"
 #include "display_list.h"
@@ -18,6 +19,7 @@ public:
 
     void render(const PaintText& text);
     void renderRange(const PaintText& text,size_t start,size_t end);
+    std::pair<float,float> measureRangeBounds(const PaintText& text,size_t start,size_t end);
 
     float measureText(const std::string& text, float size);
     float lineHeight(float size);
