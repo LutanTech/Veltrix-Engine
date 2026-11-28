@@ -108,6 +108,7 @@ int main() {
         Veltrix::CSSParser cssParser;
 
         std::string html = readFile("index.html");
+        engine.setDocumentBasePath("index.html");
         auto document = parser.parse(html);
 
 
