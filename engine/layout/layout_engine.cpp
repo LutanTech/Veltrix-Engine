@@ -268,7 +268,7 @@ void LayoutEngine::layoutText(LayoutNode& layout,const std::string& text,float a
     float maximumWidth=0;
     float y=0;
 
-    const float spaceWidth=measureText(" ",layout.fontSize);
+    const float spaceWidth=measureText(" ",layout.fontSize,layout.fontWeight);
 
     auto finishLine=[&](){
         if(!currentLine.empty()){
@@ -290,7 +290,7 @@ void LayoutEngine::layoutText(LayoutNode& layout,const std::string& text,float a
     auto appendWord=[&](const std::string& value){
         if(value.empty())return;
 
-        float wordWidth=measureText(value,layout.fontSize);
+        float wordWidth=measureText(value,layout.fontSize,layout.fontWeight);
 
         if(!currentLine.empty()&&availableWidth>0&&
            currentWidth+spaceWidth+wordWidth>availableWidth){
@@ -305,7 +305,7 @@ void LayoutEngine::layoutText(LayoutNode& layout,const std::string& text,float a
                 );
 
                 std::string character=value.substr(position,length);
-                float characterWidth=measureText(character,layout.fontSize);
+                float characterWidth=measureText(character,layout.fontSize,layout.fontWeight);
 
                 if(!currentLine.empty()&&
                    currentWidth+characterWidth>availableWidth){
