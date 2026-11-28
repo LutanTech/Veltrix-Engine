@@ -283,6 +283,14 @@ void Engine::handleTextMouse(const SDL_Event& event){
     if(event.type==SDL_EVENT_MOUSE_MOTION){
         selectionMouseX=event.motion.x;
         selectionMouseY=event.motion.y;
+        for(const auto& element:displayList.elements()){
+            if(element.type!=PaintElementType::Button)continue;
+            float y=element.y-scrollOffset;
+            if(event.motion.x>=element.x&&event.motion.x<=element.x+element.width&&event.motion.y>=y&&event.motion.y<=y+element.height){
+                setTextCursor(false);
+                return;
+            }
+        }
         int itemIndex;
         size_t offset;
         if(hitTestText(event.motion.x,event.motion.y,itemIndex,offset))setTextCursor(true);
@@ -295,6 +303,15 @@ void Engine::handleTextMouse(const SDL_Event& event){
         float mouseX=event.button.x,mouseY=event.button.y;
         selectionMouseX=mouseX;
         selectionMouseY=mouseY;
+        for(const auto& element:displayList.elements()){
+            if(element.type!=PaintElementType::Button)continue;
+            float y=element.y-scrollOffset;
+            if(mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height){
+                clearSelection();
+                setTextCursor(false);
+                return;
+            }
+        }
         int itemIndex;
         size_t offset;
         if(!hitTestText(mouseX,mouseY,itemIndex,offset)){
@@ -846,6 +863,8 @@ void Engine::renderInputSelection(){
         SDL_SetRenderDrawColor(renderer,75,105,220,150);
         SDL_FRect selection{x,y+3,std::max(width,1.0f),element.height-6};
         SDL_RenderFillRect(renderer,&selection);
+        PaintText selected{x,y+textRenderer.baseline(14),14,400,value.substr(start,end-start),{255,255,255,255}};
+        textRenderer.render(selected);
         SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_NONE);
         return;
     }
