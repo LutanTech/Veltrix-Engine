@@ -372,18 +372,19 @@ void LayoutEngine::layoutText(LayoutNode& layout,const std::string& text,float a
     layout.height=y;
 }
 
-std::unique_ptr<LayoutNode> LayoutEngine::build(Node* root,float viewportWidth){
+std::unique_ptr<LayoutNode> LayoutEngine::build(Node* root,float viewportWidth,float viewportHeight){
     if(!root)return nullptr;
 
     if(!fontAttempted)
         initialize("assets/fonts/Roboto-Regular.ttf");
 
-    return buildNode(root,viewportWidth,16,400);
+    return buildNode(root,viewportWidth,viewportHeight,16,400);
 }
 
 std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
     Node* node,
     float availableWidth,
+    float availableHeight,
     float inheritedFontSize,
     int inheritedFontWeight
 ){
@@ -667,7 +668,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             );
         }
     }else{
-        specifiedWidth=parseNumber(widthValue,availableWidth);
+        specifiedWidth=widthValue.find('%')!=std::string::npos?availableWidth*parseNumber(widthValue)/100.0f:parseNumber(widthValue,availableWidth);
     }
 
     if(boxSizing=="border-box"){
@@ -740,6 +741,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             contentAvailableWidth>0?
                 contentAvailableWidth:
                 availableWidth,
+            heightValue.empty()||heightValue=="auto"?0.0f:(heightValue.find('%')!=std::string::npos?availableHeight*parseNumber(heightValue)/100.0f:parseNumber(heightValue,availableHeight)),
             layout->fontSize,
             layout->fontWeight
         );
@@ -1260,10 +1262,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
     );
 
     if(!heightValue.empty()&&heightValue!="auto"){
-        float specifiedHeight=parseNumber(
-            heightValue,
-            naturalHeight
-        );
+        float specifiedHeight=heightValue.find('%')!=std::string::npos?availableHeight*parseNumber(heightValue)/100.0f:parseNumber(heightValue,naturalHeight);
 
         if(boxSizing=="border-box"){
             layout->height=std::max(
