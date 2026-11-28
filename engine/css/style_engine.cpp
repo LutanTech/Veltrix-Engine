@@ -1315,6 +1315,17 @@ void StyleEngine::apply(
         if(node->computedStyle("text-decoration").empty())node->setComputedStyle("text-decoration","underline");
     }
 
+    for(const auto& rule:rules){
+        size_t hover=rule.selector.find(":hover");
+        if(hover==std::string::npos)continue;
+        std::string selector=rule.selector;
+        selector.erase(hover,6);
+        if(!matchesSelector(selector,node,ancestors))continue;
+        const auto& properties=rule.style.allProperties();
+        auto color=properties.find("color");
+        if(color!=properties.end())node->setComputedStyle("hover-color",resolveVariables(color->second,variables));
+    }
+
     std::string color =
         node->computedStyle("color");
 
