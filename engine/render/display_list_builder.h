@@ -16,7 +16,8 @@ private:
         DisplayList& displayList,
         float parentX,
         float parentY,
-        const std::string& inheritedColor
+        const std::string& inheritedColor,
+        int inheritedWeight
     );
 
     Color parseColor(
