@@ -192,14 +192,23 @@ void DisplayListBuilder::buildNode(
     float absoluteX=parentX+node->x;
     float absoluteY=parentY+node->y;
     Node* domNode=node->domNode;
+    
     std::string colorValue=inheritedColor;
     std::string tag;
+
+    if(domNode->type()==NodeType::Element){
+        std::string computedColor=domNode->computedStyle("color");
+        if(!computedColor.empty())colorValue=computedColor;
+    }
 
     if(domNode->type()==NodeType::Element){
         std::string tag=domNode->name();
         Color foreground=parseColor(colorValue);
         std::string background=domNode->computedStyle("background-color");
         Color backgroundColor=background.empty()?Color{0,0,0,0}:parseColor(background,colorValue);
+
+        if(backgroundColor.a>0&&node->width>0&&node->height>0)
+            displayList.addRect(absoluteX,absoluteY,node->width,node->height,backgroundColor);
     
         if(tag=="hr"){
             Color ruleColor=parseColor(domNode->computedStyle("border-color"),colorValue);

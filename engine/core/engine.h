@@ -76,6 +76,8 @@ private:
         int& endItem,size_t& endOffset
     ) const;
 
+    void renderInputSelection();
+    
     std::string selectedText() const;
     std::unordered_map<std::string,SDL_Texture*> imageTextures;
 

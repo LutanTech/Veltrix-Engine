@@ -595,39 +595,98 @@ void Engine::handleTextKeyboard(const SDL_Event& event){
 }
 
 bool Engine::handleInputMouse(const SDL_Event& event){
-    if(event.type!=SDL_EVENT_MOUSE_BUTTON_DOWN||event.button.button!=SDL_BUTTON_LEFT)return false;
-    float mouseX=event.button.x,mouseY=event.button.y;
     const auto& elements=displayList.elements();
-    for(size_t i=0;i<elements.size();++i){
-        const auto& element=elements[i];
-        if(element.type!=PaintElementType::Input)continue;
-        float y=element.y-scrollOffset;
-        if(mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height){
-            focusedInput=static_cast<int>(i);
-            inputCaret=inputValues[i].size();
-            inputSelectionStart=inputSelectionEnd=inputCaret;
+    auto findInput=[&](int index)->const PaintElement*{
+        int current=0;
+        for(const auto& element:elements)
+            if(element.type==PaintElementType::Input){
+                if(current++==index)return &element;
+            }
+        return nullptr;
+    };
+    auto offsetAt=[&](const PaintElement& element,const std::string& value,float mouseX){
+        float localX=mouseX-(element.x+6);
+        if(localX<=0)return size_t(0);
+        size_t offset=0;
+        while(offset<value.size()){
+            size_t next=nextUtf8(value,offset);
+            float left=textRenderer.measureText(value.substr(0,offset),14);
+            float right=textRenderer.measureText(value.substr(0,next),14);
+            if(localX<(left+right)*.5f)return offset;
+            offset=next;
+        }
+        return value.size();
+    };
+
+    if(event.type==SDL_EVENT_MOUSE_BUTTON_DOWN&&event.button.button==SDL_BUTTON_LEFT){
+        float mouseX=event.button.x,mouseY=event.button.y;
+        int inputIndex=0;
+        for(const auto& element:elements){
+            if(element.type!=PaintElementType::Input)continue;
+            float y=element.y-scrollOffset;
+            if(mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height){
+                if(focusedInput!=inputIndex){
+                    focusedInput=inputIndex;
+                    inputCaret=inputValues[inputIndex].size();
+                }
+                inputCaret=offsetAt(element,inputValues[inputIndex],mouseX);
+                inputSelectionStart=inputSelectionEnd=inputCaret;
+                inputSelecting=true;
+                textFocus=false;
+                textSelecting=false;
+                clearSelection();
+                SDL_StartTextInput(window);
+                setTextCursor(true);
+                caretStartTime=SDL_GetTicks();
+                return true;
+            }
+            ++inputIndex;
+        }
+        if(focusedInput>=0){
+            focusedInput=-1;
             inputSelecting=false;
-            textFocus=false;
-            textSelecting=false;
-            clearSelection();
-            SDL_StartTextInput(window);
-            setTextCursor(true);
-            return true;
+            SDL_StopTextInput(window);
+        }
+        return false;
+    }
+
+    if(event.type==SDL_EVENT_MOUSE_MOTION){
+        if(inputSelecting&&focusedInput>=0){
+            const PaintElement* element=findInput(focusedInput);
+            if(element){
+                inputCaret=offsetAt(*element,inputValues[focusedInput],event.motion.x);
+                inputSelectionEnd=inputCaret;
+                caretStartTime=SDL_GetTicks();
+                return true;
+            }
+        }
+        if(focusedInput>=0){
+            const PaintElement* element=findInput(focusedInput);
+            if(element){
+                float y=element->y-scrollOffset;
+                if(event.motion.x>=element->x&&event.motion.x<=element->x+element->width&&event.motion.y>=y&&event.motion.y<=y+element->height){
+                    setTextCursor(true);
+                    return true;
+                }
+            }
         }
     }
-    if(focusedInput>=0){
-        focusedInput=-1;
-        SDL_StopTextInput(window);
+
+    if(event.type==SDL_EVENT_MOUSE_BUTTON_UP&&event.button.button==SDL_BUTTON_LEFT&&inputSelecting){
+        inputSelecting=false;
+        return true;
     }
     return false;
 }
 
 void Engine::handleInputKeyboard(const SDL_Event& event){
-    if(focusedInput<0||event.type!=SDL_EVENT_KEY_DOWN)return;
+    if(focusedInput<0||focusedInput>=static_cast<int>(inputValues.size())||event.type!=SDL_EVENT_KEY_DOWN)return;
     std::string& value=inputValues[focusedInput];
     SDL_Keymod mods=SDL_GetModState();
     bool ctrl=(mods&SDL_KMOD_CTRL)!=0;
     bool shift=(mods&SDL_KMOD_SHIFT)!=0;
+    size_t start=std::min(inputSelectionStart,inputSelectionEnd);
+    size_t end=std::max(inputSelectionStart,inputSelectionEnd);
 
     if(ctrl&&event.key.key==SDLK_A){
         inputSelectionStart=0;
@@ -635,31 +694,30 @@ void Engine::handleInputKeyboard(const SDL_Event& event){
         inputCaret=value.size();
         return;
     }
-
     if(ctrl&&event.key.key==SDLK_C){
-        if(inputSelectionStart!=inputSelectionEnd){
-            size_t start=std::min(inputSelectionStart,inputSelectionEnd);
-            size_t end=std::max(inputSelectionStart,inputSelectionEnd);
+        if(start!=end)SDL_SetClipboardText(value.substr(start,end-start).c_str());
+        return;
+    }
+    if(ctrl&&event.key.key==SDLK_X){
+        if(start!=end){
             SDL_SetClipboardText(value.substr(start,end-start).c_str());
+            value.erase(start,end-start);
+            inputCaret=start;
+            inputSelectionStart=inputSelectionEnd=inputCaret;
         }
         return;
     }
-
     if(ctrl&&event.key.key==SDLK_V){
         char* clipboard=SDL_GetClipboardText();
         if(clipboard){
-            size_t start=std::min(inputSelectionStart,inputSelectionEnd);
-            size_t end=std::max(inputSelectionStart,inputSelectionEnd);
             value.replace(start,end-start,clipboard);
             inputCaret=start+std::string(clipboard).size();
-            inputSelectionStart=inputSelectionEnd=inputCaret;
             SDL_free(clipboard);
         }
+        inputSelectionStart=inputSelectionEnd=inputCaret;
+        caretStartTime=SDL_GetTicks();
         return;
     }
-
-    size_t start=std::min(inputSelectionStart,inputSelectionEnd);
-    size_t end=std::max(inputSelectionStart,inputSelectionEnd);
 
     switch(event.key.key){
         case SDLK_BACKSPACE:
@@ -682,33 +740,34 @@ void Engine::handleInputKeyboard(const SDL_Event& event){
             }
             break;
         case SDLK_LEFT:
-            inputCaret=start==end?(inputCaret>0?previousUtf8(value,inputCaret):0):start;
+            inputCaret=start!=end&&!shift?start:(inputCaret>0?previousUtf8(value,inputCaret):0);
             break;
         case SDLK_RIGHT:
-            inputCaret=start==end?(inputCaret<value.size()?nextUtf8(value,inputCaret):value.size()):end;
+            inputCaret=start!=end&&!shift?end:(inputCaret<value.size()?nextUtf8(value,inputCaret):value.size());
             break;
         case SDLK_HOME:inputCaret=0;break;
         case SDLK_END:inputCaret=value.size();break;
         case SDLK_RETURN:
         case SDLK_KP_ENTER:
-            focusedInput=-1;
-            SDL_StopTextInput(window);
-            return;
         case SDLK_ESCAPE:
             focusedInput=-1;
+            inputSelecting=false;
             SDL_StopTextInput(window);
             return;
         default:return;
     }
 
-    inputSelectionStart=inputSelectionEnd=inputCaret;
+    if(shift){
+        inputSelectionEnd=inputCaret;
+    }else{
+        inputSelectionStart=inputSelectionEnd=inputCaret;
+    }
     inputSelecting=false;
     caretStartTime=SDL_GetTicks();
-    (void)shift;
 }
 
 void Engine::handleInputText(const SDL_Event& event){
-    if(focusedInput<0||event.type!=SDL_EVENT_TEXT_INPUT)return;
+    if(focusedInput<0||focusedInput>=static_cast<int>(inputValues.size())||event.type!=SDL_EVENT_TEXT_INPUT)return;
     std::string& value=inputValues[focusedInput];
     size_t start=std::min(inputSelectionStart,inputSelectionEnd);
     size_t end=std::max(inputSelectionStart,inputSelectionEnd);
@@ -717,6 +776,48 @@ void Engine::handleInputText(const SDL_Event& event){
     inputCaret=start+text.size();
     inputSelectionStart=inputSelectionEnd=inputCaret;
     caretStartTime=SDL_GetTicks();
+}
+void Engine::renderInputSelection(){
+    if(focusedInput<0||focusedInput>=static_cast<int>(inputValues.size()))return;
+    size_t start=std::min(inputSelectionStart,inputSelectionEnd);
+    size_t end=std::max(inputSelectionStart,inputSelectionEnd);
+    if(start==end)return;
+    int current=0;
+    for(const auto& element:displayList.elements()){
+        if(element.type!=PaintElementType::Input)continue;
+        if(current++!=focusedInput)continue;
+        const std::string& value=inputValues[focusedInput];
+        start=std::min(start,value.size());
+        end=std::min(end,value.size());
+        float x=element.x+6+textRenderer.measureText(value.substr(0,start),14);
+        float width=textRenderer.measureText(value.substr(start,end-start),14);
+        float y=element.y-scrollOffset;
+        SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer,75,105,220,150);
+        SDL_FRect selection{x,y+3,std::max(width,1.0f),element.height-6};
+        SDL_RenderFillRect(renderer,&selection);
+        SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_NONE);
+        return;
+    }
+}
+
+void Engine::renderInputCaret(){
+    if(focusedInput<0||focusedInput>=static_cast<int>(inputValues.size()))return;
+    if(inputSelectionStart!=inputSelectionEnd)return;
+    if((SDL_GetTicks()-caretStartTime)/530%2==0)return;
+    int current=0;
+    for(const auto& element:displayList.elements()){
+        if(element.type!=PaintElementType::Input)continue;
+        if(current++!=focusedInput)continue;
+        const std::string& value=inputValues[focusedInput];
+        size_t caret=std::min(inputCaret,value.size());
+        float x=element.x+6+textRenderer.measureText(value.substr(0,caret),14);
+        float y=element.y-scrollOffset;
+        SDL_SetRenderDrawColor(renderer,35,35,35,255);
+        SDL_FRect rect{x,y+5,1.5f,element.height-10};
+        SDL_RenderFillRect(renderer,&rect);
+        return;
+    }
 }
 
 void Engine::run(){
@@ -777,7 +878,9 @@ void Engine::run(){
             SDL_RenderFillRect(renderer,&destination);
         }
 
+        int inputIndex=0;
         for(const auto& element:displayList.elements()){
+            int currentInput=element.type==PaintElementType::Input?inputIndex++:-1;
             float y=element.y-scrollOffset;
             if(y+element.height<=0||y>=viewportHeight)continue;
         
@@ -819,13 +922,15 @@ void Engine::run(){
                 SDL_SetRenderDrawColor(renderer,130,130,130,255);
                 SDL_RenderRect(renderer,&destination);
         
-                if(!element.value.empty()){
-                    PaintText value{element.x+6,y+element.height*.5f+5,14,element.value,{35,35,35,255}};
+                if(currentInput>=0&&currentInput<static_cast<int>(inputValues.size())){
+                    const std::string& inputValue=inputValues[currentInput];
+                    PaintText value{element.x+6,y+element.height*.5f+5,14,inputValue,{35,35,35,255}};
                     textRenderer.render(value);
                 }
             }
         }
 
+        renderInputSelection();
         renderTextSelection();
 
         const auto& texts=displayList.texts();
@@ -840,6 +945,7 @@ void Engine::run(){
         }
 
         renderCaret();
+        renderInputCaret();
         renderScrollbar();
         SDL_RenderPresent(renderer);
     }
