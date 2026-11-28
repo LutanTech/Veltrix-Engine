@@ -617,15 +617,19 @@ bool Engine::handleInputMouse(const SDL_Event& event){
         mouseX=event.motion.x;
         mouseY=event.motion.y;
         hoveredButton=-1;
+        bool hoveredInput=false;
         int buttonIndex=0;
         for(const auto& element:displayList.elements()){
+            float y=element.y-scrollOffset;
+            bool inside=mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height;
+            if(element.type==PaintElementType::Input&&inside)hoveredInput=true;
             if(element.type==PaintElementType::Button){
-                float y=element.y-scrollOffset;
-                if(mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height)
-                    hoveredButton=buttonIndex;
+                if(inside)hoveredButton=buttonIndex;
                 ++buttonIndex;
             }
         }
+        if(hoveredInput)setTextCursor(true);
+        else if(hoveredButton>=0)setTextCursor(false);
     }
     if(event.type==SDL_EVENT_MOUSE_BUTTON_DOWN&&event.button.button==SDL_BUTTON_LEFT){
         mouseX=event.button.x;
