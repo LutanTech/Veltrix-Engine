@@ -974,6 +974,8 @@ void Engine::run(){
                     PaintText value{element.x+7,textY,14,400,inputValue,{35,35,35,255}};
                     textRenderer.render(value);
                 }
+                SDL_SetRenderDrawColor(renderer,118,118,118,255);
+                SDL_RenderRect(renderer,&destination);
                 if(currentInput==focusedInput){
                     SDL_SetRenderDrawColor(renderer,50,120,220,255);
                     SDL_RenderRect(renderer,&destination);
@@ -1002,7 +1004,7 @@ void Engine::run(){
                     float width=textRenderer.measureText(element.value,14);
                     float textHeight=textRenderer.lineHeight(14);
                     float textX=element.x+(element.width-width)*.5f;
-                    float textY=y+(element.height-textHeight*.57f)*.5f;
+                    float textY=y+(element.height-textHeight)*.5f+textRenderer.baseline(14);
                     PaintText label{textX,textY,14,400,element.value,{35,35,35,255}};
                     textRenderer.render(label);
                 }
