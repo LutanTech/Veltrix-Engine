@@ -1,9 +1,0 @@
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/brotlicommon.dir
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/brotlidec.dir
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/brotlienc.dir
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/brotli.dir
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/edit_cache.dir
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/rebuild_cache.dir
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/list_install_components.dir
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/install.dir
-D:/PYTHON/Veltrix Engine/vcpkg_installed/vcpkg/blds/brotli/x64-windows-rel/CMakeFiles/install/local.dir

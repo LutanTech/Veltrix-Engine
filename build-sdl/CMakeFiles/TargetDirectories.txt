@@ -1,9 +1,0 @@
-D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/Veltrix.dir
-D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/PACKAGE.dir
-D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/INSTALL.dir
-D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/ALL_BUILD.dir
-D:/PYTHON/Veltrix Engine/build-sdl/CMakeFiles/ZERO_CHECK.dir
-D:/PYTHON/Veltrix Engine/build-sdl/freetype-build/CMakeFiles/freetype.dir
-D:/PYTHON/Veltrix Engine/build-sdl/freetype-build/CMakeFiles/PACKAGE.dir
-D:/PYTHON/Veltrix Engine/build-sdl/freetype-build/CMakeFiles/INSTALL.dir
-D:/PYTHON/Veltrix Engine/build-sdl/freetype-build/CMakeFiles/ALL_BUILD.dir

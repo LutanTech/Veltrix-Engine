@@ -1,9 +1,0 @@
-D:\PYTHON\Veltrix Engine\engine\main.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\main.obj
-D:\PYTHON\Veltrix Engine\engine\core\engine.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\engine.obj
-D:\PYTHON\Veltrix Engine\engine\dom\node.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\node.obj
-D:\PYTHON\Veltrix Engine\engine\dom\document.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\document.obj
-D:\PYTHON\Veltrix Engine\engine\html\parser.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\engine\html\parser.cpp.obj
-D:\PYTHON\Veltrix Engine\engine\css\style.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\style.obj
-D:\PYTHON\Veltrix Engine\engine\css\parser.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\engine\css\parser.cpp.obj
-D:\PYTHON\Veltrix Engine\engine\css\style_engine.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\style_engine.obj
-D:\PYTHON\Veltrix Engine\engine\layout\layout_engine.cpp;D:\PYTHON\Veltrix Engine\build\Veltrix.dir\Debug\layout_engine.obj

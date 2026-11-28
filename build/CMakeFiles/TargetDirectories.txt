@@ -1,3 +1,0 @@
-D:/PYTHON/Veltrix Engine/build/CMakeFiles/Veltrix.dir
-D:/PYTHON/Veltrix Engine/build/CMakeFiles/ALL_BUILD.dir
-D:/PYTHON/Veltrix Engine/build/CMakeFiles/ZERO_CHECK.dir
