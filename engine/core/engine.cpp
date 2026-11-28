@@ -911,7 +911,7 @@ void Engine::run(){
                     SDL_RenderRect(renderer,&destination);
         
                     if(!element.alt.empty()){
-                        PaintText alt{element.x+5,y+element.height*.5f,13,element.alt,{70,70,70,255}};
+                        PaintText alt{element.x+5,y+element.height*.5f,13,400,element.alt,{70,70,70,255}};
                         textRenderer.render(alt);
                     }
                 }
@@ -924,7 +924,7 @@ void Engine::run(){
         
                 if(currentInput>=0&&currentInput<static_cast<int>(inputValues.size())){
                     const std::string& inputValue=inputValues[currentInput];
-                    PaintText value{element.x+6,y+element.height*.5f+5,14,inputValue,{35,35,35,255}};
+                    PaintText value{element.x+6,y+element.height*.5f+5,14,400,inputValue,{35,35,35,255}};
                     textRenderer.render(value);
                 }
             }
