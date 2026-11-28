@@ -1,5 +1,6 @@
 #include "display_list_builder.h"
 #include <algorithm>
+#include <cstdint>
 #include <cctype>
 #include <cmath>
 #include <cstdint>
@@ -271,7 +272,7 @@ std::string collectButtonText(const Node* node){
 
 DisplayList DisplayListBuilder::build(const LayoutNode* root) {
  DisplayList displayList;
- buildNode(root, displayList, 0, 0, "black", 400, false, "", false, {0,0,0,0});
+ buildNode(root, displayList, 0, 0, "black", 400, false, "", false, {0,0,0,0}, 0);
  return displayList;
 }
 
@@ -285,7 +286,8 @@ void DisplayListBuilder::buildNode(
     bool insideButton,
     const std::string& inheritedLink,
     bool inheritedUnderline,
-    Color inheritedHoverColor
+    Color inheritedHoverColor,
+    uint64_t inheritedLinkId
 ){
     if(!node||!node->domNode)return;
 
@@ -298,6 +300,7 @@ void DisplayListBuilder::buildNode(
     std::string linkHref=inheritedLink;
     bool underline=inheritedUnderline;
     Color hoverColor=inheritedHoverColor;
+    uint64_t linkId=inheritedLinkId;
     int fontWeight=inheritedWeight;
 
     if(domNode->type()==NodeType::Element){
@@ -313,6 +316,7 @@ void DisplayListBuilder::buildNode(
         tag=domNode->name();
         if(tag=="a"){
             linkHref=domNode->attribute("href");
+            linkId=static_cast<uint64_t>(reinterpret_cast<uintptr_t>(domNode));
             std::string linkColor=domNode->computedStyle("color");
             colorValue=linkColor.empty()?"#0000ee":linkColor;
             std::string decoration=domNode->computedStyle("text-decoration");
@@ -332,7 +336,7 @@ void DisplayListBuilder::buildNode(
         Color backgroundColor=backgroundColorValue.empty()?Color{0,0,0,0}:parseColor(backgroundColorValue,colorValue);
 
         if(domNode->hasAttribute("id"))displayList.addElement(PaintElementType::Anchor,absoluteX,absoluteY,std::max(node->width,1.0f),std::max(node->height,1.0f),{0,0,0,0},"","",domNode->attribute("id"));
-        if(tag=="a"&&!linkHref.empty())displayList.addElement(PaintElementType::Link,absoluteX,absoluteY,std::max(node->width,1.0f),std::max(node->height,node->lineHeight),{0,0,0,0},"","",linkHref,"",hoverColor);
+        if(tag=="a"&&!linkHref.empty())displayList.addElement(PaintElementType::Link,absoluteX,absoluteY,std::max(node->width,1.0f),std::max(node->height,node->lineHeight),{0,0,0,0},"","",linkHref,"",hoverColor,linkId);
 
         if(backgroundColor.a>0&&node->width>0&&node->height>0)
             displayList.addRect(absoluteX,absoluteY,node->width,node->height,backgroundColor);
@@ -399,7 +403,8 @@ void DisplayListBuilder::buildNode(
                     fragment.text,
                     parseColor(colorValue),
                     underline,
-                    linkHref
+                    linkHref,
+                    linkId
                 );
             }
         }else{
@@ -439,7 +444,8 @@ void DisplayListBuilder::buildNode(
             insideButton||tag=="button",
             linkHref,
             underline,
-            hoverColor
+            hoverColor,
+            linkId
         );
     }
 }
