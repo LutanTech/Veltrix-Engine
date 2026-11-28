@@ -57,6 +57,9 @@ bool Engine::initialize(){
     int height=mode?static_cast<int>(mode->h*.85f):700;
     window=SDL_CreateWindow("Veltrix | Engineered to render.",width,height,SDL_WINDOW_RESIZABLE);
     if(!window){SDL_Quit();return false;}
+    SDL_GetWindowSize(window,&width,&height);
+    viewportWidth=static_cast<float>(width);
+    viewportHeight=static_cast<float>(height);
     renderer=SDL_CreateRenderer(window,nullptr);
     if(!renderer){SDL_DestroyWindow(window);SDL_Quit();return false;}
     if(!textRenderer.initialize(renderer,"assets/fonts/Roboto-Regular.ttf")){
@@ -69,6 +72,13 @@ bool Engine::initialize(){
     textCursor=SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_TEXT);
     running=true;
     return true;
+}
+
+void Engine::setResizeHandler(std::function<DisplayList(float,float)> handler){resizeHandler=std::move(handler);}
+
+void Engine::getViewportSize(float& width,float& height) const{
+    width=viewportWidth;
+    height=viewportHeight;
 }
 
 void Engine::setDisplayList(const DisplayList& list){
@@ -930,8 +940,27 @@ void Engine::run(){
         deltaTime=std::clamp(deltaTime,0.0,0.05);
 
         int windowWidth=0,windowHeight=0;
-        if(SDL_GetWindowSize(window,&windowWidth,&windowHeight))
-            viewportHeight=static_cast<float>(windowHeight);
+        if(SDL_GetWindowSize(window,&windowWidth,&windowHeight)){
+            if(windowWidth!=static_cast<int>(viewportWidth)||windowHeight!=static_cast<int>(viewportHeight)){
+                viewportWidth=static_cast<float>(windowWidth);
+                viewportHeight=static_cast<float>(windowHeight);
+                if(resizeHandler){
+                    float previousScroll=scrollOffset;
+                    auto previousInputs=inputValues;
+                    displayList=resizeHandler(viewportWidth,viewportHeight);
+                    inputValues.clear();
+                    for(const auto& element:displayList.elements()){
+                        if(element.type!=PaintElementType::Input)continue;
+                        size_t index=inputValues.size();
+                        inputValues.push_back(index<previousInputs.size()?previousInputs[index]:element.value);
+                    }
+                    clearSelection();
+                    updateContentHeight();
+                    scrollOffset=std::clamp(previousScroll,0.0f,std::max(0.0f,contentHeight-viewportHeight));
+                    targetScrollOffset=scrollOffset;
+                }
+            }
+        }
 
         float maxScroll=std::max(0.0f,contentHeight-viewportHeight);
         targetScrollOffset=std::clamp(targetScrollOffset,0.0f,maxScroll);
