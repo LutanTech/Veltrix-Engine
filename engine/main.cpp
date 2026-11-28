@@ -122,7 +122,7 @@ int main() {
 
 
         Veltrix::LayoutEngine layoutEngine;
-        auto layout = layoutEngine.build(document.root(), 1280);
+        auto layout = layoutEngine.build(document.root(), 1280, 800);
 
         if (!layout) {
             throw std::runtime_error("Could not build layout tree.");
