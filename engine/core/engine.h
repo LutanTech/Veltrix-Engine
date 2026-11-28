@@ -3,6 +3,8 @@
 #include "render/display_list.h"
 #include "render/text_renderer.h"
 #include <functional>
+#include <string>
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
 
@@ -12,6 +14,9 @@ class Engine {
 public:
     bool initialize();
     void setDisplayList(const DisplayList& list);
+    void setDocumentBasePath(const std::string& path);
+    void registerBlob(const std::string& url,const std::vector<uint8_t>& data);
+    void revokeBlob(const std::string& url);
     void setResizeHandler(std::function<DisplayList(float,float)> handler);
     void getViewportSize(float& width,float& height) const;
     void run();
@@ -89,6 +94,9 @@ private:
     
     std::string selectedText() const;
     std::unordered_map<std::string,SDL_Texture*> imageTextures;
+    std::unordered_map<std::string,std::vector<uint8_t>> blobResources;
+    std::string documentBasePath;
+    SDL_Texture* loadImageTexture(const std::string& source);
 
     void selectWord(int itemIndex,size_t offset);
     void selectLine(int itemIndex);
