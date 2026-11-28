@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.20)
 
 project(Veltrix
@@ -37,8 +38,11 @@ add_subdirectory(
     freetype-build
 )
 
-target_link_libraries(Veltrix PRIVATE freetype)
 target_include_directories(Veltrix PRIVATE engine)
-target_link_libraries(Veltrix PRIVATE SDL3::SDL3 lexbor::lexbor)
-target_link_libraries(Veltrix PRIVATE SDL3::SDL3)
-target_link_libraries(Veltrix PRIVATE SDL3::SDL3 lexbor::lexbor SDL3_image::SDL3_image)
+
+target_link_libraries(Veltrix PRIVATE
+    freetype
+    SDL3::SDL3
+    lexbor::lexbor
+    $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
+)
