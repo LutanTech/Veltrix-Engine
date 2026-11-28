@@ -402,6 +402,7 @@ void Engine::renderTextSelection(){
         float x=text.x+textWidth(text,from);
         float width=textWidth(text,to)-textWidth(text,from);
         float h=textRenderer.lineHeight(text.size);
+        if(to==text.text.size())width+=text.size*.25f;
         SDL_FRect rect{x,text.y-scrollOffset-h*.82f,std::max(width,1.0f),h};
         SDL_RenderFillRect(renderer,&rect);
     }
