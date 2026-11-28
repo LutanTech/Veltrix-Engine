@@ -1,5 +1,6 @@
 
 #include "font_manager.h"
+#include FT_SYNTHESIS_H
 #include <cstdint>
 
 namespace Veltrix {
@@ -87,7 +88,8 @@ bool FontManager::setSize(unsigned int size) {
 
 float FontManager::measureText(
     const std::string& text,
-    unsigned int size
+    unsigned int size,
+    unsigned int weight
 ) {
     if (!fontFace || !setSize(size)) {
         return 0;
@@ -120,6 +122,9 @@ float FontManager::measureText(
         }
 
         if (FT_Load_Glyph(fontFace, glyphIndex, FT_LOAD_DEFAULT) == 0) {
+            if (weight >= 600)
+                FT_GlyphSlot_Embolden(fontFace->glyph);
+
             width += static_cast<float>(
                 fontFace->glyph->advance.x
             ) / 64.0f;
