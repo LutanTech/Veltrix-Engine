@@ -256,7 +256,7 @@ void Engine::selectLine(int itemIndex){
         const auto& previous=texts[start-1];
         float gap=current.y-previous.y;
         float expected=(lineHeight+textRenderer.lineHeight(previous.size))*.5f;
-        if(gap>expected*1.8f)break;
+        if(gap>expected*.5f)break;
         --start;
     }
 
@@ -265,7 +265,7 @@ void Engine::selectLine(int itemIndex){
         const auto& next=texts[end+1];
         float gap=next.y-current.y;
         float expected=(textRenderer.lineHeight(current.size)+textRenderer.lineHeight(next.size))*.5f;
-        if(gap>expected*1.8f)break;
+        if(gap>expected*.5f)break;
         ++end;
     }
 
