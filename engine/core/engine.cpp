@@ -451,21 +451,10 @@ void Engine::renderTextItem(const PaintText& text,int itemIndex){
     textRenderer.render(visible);
 
     if(from<to){
-        float left=textWidth(text,from);
-        float right=textWidth(text,to);
-        float h=textRenderer.lineHeight(text.size);
-        SDL_Rect clip{
-            static_cast<int>(std::floor(text.x+left)),
-            static_cast<int>(std::floor(text.y-scrollOffset-h*.82f)),
-            static_cast<int>(std::ceil(std::max(1.0f,right-left))),
-            static_cast<int>(std::ceil(h))
-        };
         PaintText selected=text;
         selected.y-=scrollOffset;
         selected.color={255,255,255,255};
-        SDL_SetRenderClipRect(renderer,&clip);
-        textRenderer.render(selected);
-        SDL_SetRenderClipRect(renderer,nullptr);
+        textRenderer.renderRange(selected,from,to);
     }
 }
 
