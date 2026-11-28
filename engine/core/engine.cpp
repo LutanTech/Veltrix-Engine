@@ -954,7 +954,11 @@ void Engine::run(){
                 break;
             }
         }
-        if(!cursorResolved)setTextCursor(false);
+        if(!cursorResolved){
+            int textIndex;
+            size_t textOffset;
+            setTextCursor(hitTestText(cursorX,cursorY,textIndex,textOffset));
+        }
 
         SDL_SetRenderDrawColor(renderer,255,255,255,255);
         SDL_RenderClear(renderer);
