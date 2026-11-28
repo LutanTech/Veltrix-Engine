@@ -96,6 +96,8 @@ private:
     size_t inputSelectionStart=0;
     size_t inputSelectionEnd=0;
     bool inputSelecting=false;
+    Uint64 lastInputClickTime=0;
+    int inputClickCount=0;
     float mouseX=0;
     float mouseY=0;
     int hoveredButton=-1;
