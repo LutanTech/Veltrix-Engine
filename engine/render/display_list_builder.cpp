@@ -270,7 +270,8 @@ void DisplayListBuilder::buildNode(
     DisplayList& displayList,
     float parentX,
     float parentY,
-    const std::string& inheritedColor
+    const std::string& inheritedColor,
+    int inheritedWeight
 ){
     if(!node||!node->domNode)return;
 
@@ -280,14 +281,20 @@ void DisplayListBuilder::buildNode(
     
     std::string colorValue=inheritedColor;
     std::string tag;
+    int fontWeight=inheritedWeight;
 
     if(domNode->type()==NodeType::Element){
         std::string computedColor=domNode->computedStyle("color");
         if(!computedColor.empty())colorValue=computedColor;
+        std::string computedWeight=domNode->computedStyle("font-weight");
+        if(computedWeight=="bold")fontWeight=700;
+        else if(computedWeight=="normal")fontWeight=400;
+        else if(!computedWeight.empty())fontWeight=static_cast<int>(parseNumber(computedWeight,inheritedWeight));
     }
 
     if(domNode->type()==NodeType::Element){
         tag=domNode->name();
+        if(domNode->computedStyle("font-weight").empty()&&(tag=="h1"||tag=="h2"||tag=="h3"||tag=="h4"||tag=="h5"||tag=="h6"))fontWeight=700;
         Color foreground=parseColor(colorValue);
         std::string background=domNode->computedStyle("background-color");
         Color backgroundColor=background.empty()?Color{0,0,0,0}:parseColor(background,colorValue);
@@ -349,6 +356,7 @@ void DisplayListBuilder::buildNode(
                     absoluteX+fragment.x,
                     absoluteY+fragment.y+node->fontBaseline,
                     node->fontSize,
+                    fontWeight,
                     fragment.text,
                     parseColor(colorValue)
                 );
@@ -367,6 +375,7 @@ void DisplayListBuilder::buildNode(
                     absoluteX,
                     absoluteY+node->fontBaseline,
                     node->fontSize,
+                    fontWeight,
                     content,
                     parseColor(colorValue)
                 );
@@ -382,7 +391,8 @@ void DisplayListBuilder::buildNode(
             displayList,
             absoluteX,
             absoluteY,
-            colorValue
+            colorValue,
+            fontWeight
         );
     }
 }
