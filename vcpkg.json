@@ -6,7 +6,7 @@
         "sdl3",
         {
             "name": "sdl3-image",
-            "features": ["avif", "jpeg", "png", "webp"]
+            "features": ["avif", "jpeg", "jxl", "png", "tiff", "webp"]
         },
         "lexbor"
     ]
