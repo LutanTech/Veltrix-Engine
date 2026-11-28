@@ -863,7 +863,9 @@ void Engine::renderInputSelection(){
         SDL_SetRenderDrawColor(renderer,75,105,220,150);
         SDL_FRect selection{x,y+3,std::max(width,1.0f),element.height-6};
         SDL_RenderFillRect(renderer,&selection);
-        PaintText selected{x,y+textRenderer.baseline(14),14,400,value.substr(start,end-start),{255,255,255,255}};
+        float textHeight=textRenderer.lineHeight(14);
+        float textY=y+(element.height-textHeight)*.5f+textRenderer.baseline(14);
+        PaintText selected{x,textY,14,400,value.substr(start,end-start),{255,255,255,255}};
         textRenderer.render(selected);
         SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_NONE);
         return;
