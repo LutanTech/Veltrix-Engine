@@ -427,8 +427,16 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
     std::string fontSizeValue=node->computedStyle("font-size");
 
-    if(!fontSizeValue.empty())
+    if(!fontSizeValue.empty()){
         layout->fontSize=parseNumber(fontSizeValue,inheritedFontSize);
+    }else{
+        if(tag=="h1")layout->fontSize=inheritedFontSize*2.0f;
+        else if(tag=="h2")layout->fontSize=inheritedFontSize*1.5f;
+        else if(tag=="h3")layout->fontSize=inheritedFontSize*1.17f;
+        else if(tag=="h4")layout->fontSize=inheritedFontSize;
+        else if(tag=="h5")layout->fontSize=inheritedFontSize*0.83f;
+        else if(tag=="h6")layout->fontSize=inheritedFontSize*0.67f;
+    }
 
     if(layout->fontSize<=0)
         layout->fontSize=inheritedFontSize;
@@ -460,6 +468,18 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         layout->marginBottom,
         layout->marginLeft
     );
+
+    if(tag=="h1"){
+        layout->marginTop=layout->marginBottom=layout->fontSize*0.67f;
+    }else if(tag=="h2"){
+        layout->marginTop=layout->marginBottom=layout->fontSize*0.83f;
+    }else if(tag=="h3"||tag=="h4"){
+        layout->marginTop=layout->marginBottom=layout->fontSize;
+    }else if(tag=="h5"){
+        layout->marginTop=layout->marginBottom=layout->fontSize*1.33f;
+    }else if(tag=="h6"){
+        layout->marginTop=layout->marginBottom=layout->fontSize*1.67f;
+    }
 
     parseBox(
         node,
