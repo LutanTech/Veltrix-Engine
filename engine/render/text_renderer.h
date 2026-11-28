@@ -17,6 +17,7 @@ public:
     void shutdown();
 
     void render(const PaintText& text);
+    void renderRange(const PaintText& text,size_t start,size_t end);
 
     float measureText(const std::string& text, float size);
     float lineHeight(float size);
