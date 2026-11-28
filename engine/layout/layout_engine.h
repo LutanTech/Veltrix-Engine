@@ -26,7 +26,8 @@ private:
     std::unique_ptr<LayoutNode> buildNode(
         Node* node,
         float availableWidth,
-        float inheritedFontSize
+        float inheritedFontSize,
+        int inheritedFontWeight
     );
 
     float calculateHeight(Node* node);
@@ -38,7 +39,8 @@ private:
 
     float measureText(
         const std::string& text,
-        float fontSize
+        float fontSize,
+        int fontWeight = 400
     );
 
     void layoutText(
