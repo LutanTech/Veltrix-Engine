@@ -271,7 +271,7 @@ std::string collectButtonText(const Node* node){
 
 DisplayList DisplayListBuilder::build(const LayoutNode* root) {
  DisplayList displayList;
- buildNode(root, displayList, 0, 0, "black", 400, false, "", false);
+ buildNode(root, displayList, 0, 0, "black", 400, false, "", false, {0,0,0,0});
  return displayList;
 }
 
@@ -284,7 +284,8 @@ void DisplayListBuilder::buildNode(
     int inheritedWeight,
     bool insideButton,
     const std::string& inheritedLink,
-    bool inheritedUnderline
+    bool inheritedUnderline,
+    Color inheritedHoverColor
 ){
     if(!node||!node->domNode)return;
 
@@ -296,6 +297,7 @@ void DisplayListBuilder::buildNode(
     std::string tag;
     std::string linkHref=inheritedLink;
     bool underline=inheritedUnderline;
+    Color hoverColor=inheritedHoverColor;
     int fontWeight=inheritedWeight;
 
     if(domNode->type()==NodeType::Element){
@@ -322,7 +324,7 @@ void DisplayListBuilder::buildNode(
         if(domNode->computedStyle("font-weight").empty()&&(tag=="h1"||tag=="h2"||tag=="h3"||tag=="h4"||tag=="h5"||tag=="h6"))fontWeight=700;
         Color foreground=parseColor(colorValue);
         std::string hoverColorValue=domNode->computedStyle("hover-color");
-        Color hoverColor=hoverColorValue.empty()?Color{0,0,0,0}:parseColor(hoverColorValue,colorValue);
+        if(!hoverColorValue.empty())hoverColor=parseColor(hoverColorValue,colorValue);
         std::string background=domNode->computedStyle("background");
         std::string backgroundColorValue=domNode->computedStyle("background-color");
         if(backgroundColorValue.empty()||backgroundColorValue=="transparent")
@@ -435,7 +437,8 @@ void DisplayListBuilder::buildNode(
             fontWeight,
             insideButton||tag=="button",
             linkHref,
-            underline
+            underline,
+            hoverColor
         );
     }
 }
