@@ -5,6 +5,7 @@
     "dependencies": [
         "sdl3",
         "sdl3-image",
-        "lexbor"
+        "lexbor",
+        "curl"
     ]
 }
