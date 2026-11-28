@@ -1049,7 +1049,7 @@ void Engine::renderFrame(){
                 float textHeight=textRenderer.lineHeight(14);
                 float textX=element.x+(element.width-width)*.5f;
                 float textY=y+(element.height-textHeight)*.5f+textRenderer.baseline(14);
-                PaintText label{textX,textY,14,400,element.value,{35,35,35,255}};
+                PaintText label{textX,textY,14,400,element.value,element.textColor};
                 textRenderer.render(label);
             }
         }
