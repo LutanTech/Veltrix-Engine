@@ -693,6 +693,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         float y=0;
         float lineHeight=0;
         float maximumWidth=0;
+        float lineStartX=0;
         bool pendingSpace=false;
     };
 
@@ -709,7 +710,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             layout->lineHeight
         );
 
-        flow.x=0;
+        flow.x=flow.lineStartX;
         flow.lineHeight=0;
         flow.pendingSpace=false;
     };
@@ -906,6 +907,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         float startX=flow.x;
         float startY=flow.y;
         float outerFlowY=startY;
+        float outerLineStartX=flow.lineStartX;
 
         float referenceLineHeight=std::max(
             parentLineHeight,
@@ -963,6 +965,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
         flow.y=childOriginY;
         flow.x=childOriginX;
+        flow.lineStartX=childOriginX;
 
         float previousBlockMargin=0;
         bool previousBlock=false;
@@ -1076,6 +1079,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         );
 
         flow.y=outerFlowY+std::max(0.0f,flow.y-childOriginY);
+        flow.lineStartX=outerLineStartX;
 
         float verticalExtent=std::max(
             item->height+alignmentOffset,
