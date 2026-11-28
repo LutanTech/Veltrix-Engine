@@ -73,6 +73,10 @@ bool Engine::initialize(){
 
 void Engine::setDisplayList(const DisplayList& list){
     displayList=list;
+    inputValues.clear();
+    for(const auto& element:displayList.elements())
+        if(element.type==PaintElementType::Input)
+            inputValues.push_back(element.value);
     scrollOffset=0;
     targetScrollOffset=0;
     clearSelection();
@@ -590,6 +594,131 @@ void Engine::handleTextKeyboard(const SDL_Event& event){
     textSelecting=false;
 }
 
+bool Engine::handleInputMouse(const SDL_Event& event){
+    if(event.type!=SDL_EVENT_MOUSE_BUTTON_DOWN||event.button.button!=SDL_BUTTON_LEFT)return false;
+    float mouseX=event.button.x,mouseY=event.button.y;
+    const auto& elements=displayList.elements();
+    for(size_t i=0;i<elements.size();++i){
+        const auto& element=elements[i];
+        if(element.type!=PaintElementType::Input)continue;
+        float y=element.y-scrollOffset;
+        if(mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height){
+            focusedInput=static_cast<int>(i);
+            inputCaret=inputValues[i].size();
+            inputSelectionStart=inputSelectionEnd=inputCaret;
+            inputSelecting=false;
+            textFocus=false;
+            textSelecting=false;
+            clearSelection();
+            SDL_StartTextInput(window);
+            setTextCursor(true);
+            return true;
+        }
+    }
+    if(focusedInput>=0){
+        focusedInput=-1;
+        SDL_StopTextInput(window);
+    }
+    return false;
+}
+
+void Engine::handleInputKeyboard(const SDL_Event& event){
+    if(focusedInput<0||event.type!=SDL_EVENT_KEY_DOWN)return;
+    std::string& value=inputValues[focusedInput];
+    SDL_Keymod mods=SDL_GetModState();
+    bool ctrl=(mods&SDL_KMOD_CTRL)!=0;
+    bool shift=(mods&SDL_KMOD_SHIFT)!=0;
+
+    if(ctrl&&event.key.key==SDLK_A){
+        inputSelectionStart=0;
+        inputSelectionEnd=value.size();
+        inputCaret=value.size();
+        return;
+    }
+
+    if(ctrl&&event.key.key==SDLK_C){
+        if(inputSelectionStart!=inputSelectionEnd){
+            size_t start=std::min(inputSelectionStart,inputSelectionEnd);
+            size_t end=std::max(inputSelectionStart,inputSelectionEnd);
+            SDL_SetClipboardText(value.substr(start,end-start).c_str());
+        }
+        return;
+    }
+
+    if(ctrl&&event.key.key==SDLK_V){
+        char* clipboard=SDL_GetClipboardText();
+        if(clipboard){
+            size_t start=std::min(inputSelectionStart,inputSelectionEnd);
+            size_t end=std::max(inputSelectionStart,inputSelectionEnd);
+            value.replace(start,end-start,clipboard);
+            inputCaret=start+std::string(clipboard).size();
+            inputSelectionStart=inputSelectionEnd=inputCaret;
+            SDL_free(clipboard);
+        }
+        return;
+    }
+
+    size_t start=std::min(inputSelectionStart,inputSelectionEnd);
+    size_t end=std::max(inputSelectionStart,inputSelectionEnd);
+
+    switch(event.key.key){
+        case SDLK_BACKSPACE:
+            if(start!=end){
+                value.erase(start,end-start);
+                inputCaret=start;
+            }else if(inputCaret>0){
+                size_t previous=previousUtf8(value,inputCaret);
+                value.erase(previous,inputCaret-previous);
+                inputCaret=previous;
+            }
+            break;
+        case SDLK_DELETE:
+            if(start!=end){
+                value.erase(start,end-start);
+                inputCaret=start;
+            }else if(inputCaret<value.size()){
+                size_t next=nextUtf8(value,inputCaret);
+                value.erase(inputCaret,next-inputCaret);
+            }
+            break;
+        case SDLK_LEFT:
+            inputCaret=start==end?(inputCaret>0?previousUtf8(value,inputCaret):0):start;
+            break;
+        case SDLK_RIGHT:
+            inputCaret=start==end?(inputCaret<value.size()?nextUtf8(value,inputCaret):value.size()):end;
+            break;
+        case SDLK_HOME:inputCaret=0;break;
+        case SDLK_END:inputCaret=value.size();break;
+        case SDLK_RETURN:
+        case SDLK_KP_ENTER:
+            focusedInput=-1;
+            SDL_StopTextInput(window);
+            return;
+        case SDLK_ESCAPE:
+            focusedInput=-1;
+            SDL_StopTextInput(window);
+            return;
+        default:return;
+    }
+
+    inputSelectionStart=inputSelectionEnd=inputCaret;
+    inputSelecting=false;
+    caretStartTime=SDL_GetTicks();
+    (void)shift;
+}
+
+void Engine::handleInputText(const SDL_Event& event){
+    if(focusedInput<0||event.type!=SDL_EVENT_TEXT_INPUT)return;
+    std::string& value=inputValues[focusedInput];
+    size_t start=std::min(inputSelectionStart,inputSelectionEnd);
+    size_t end=std::max(inputSelectionStart,inputSelectionEnd);
+    std::string text=event.text.text;
+    value.replace(start,end-start,text);
+    inputCaret=start+text.size();
+    inputSelectionStart=inputSelectionEnd=inputCaret;
+    caretStartTime=SDL_GetTicks();
+}
+
 void Engine::run(){
     SDL_Event event;
     Uint64 previousCounter=SDL_GetPerformanceCounter();
@@ -605,6 +734,10 @@ void Engine::run(){
                 if(event.wheel.direction==SDL_MOUSEWHEEL_FLIPPED)amount=-amount;
                 handleScroll(amount);
             }
+
+            handleInputMouse(event);
+            handleInputKeyboard(event);
+            handleInputText(event);
 
             handleTextKeyboard(event);
             handleScrollbar(event);

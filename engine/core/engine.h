@@ -3,6 +3,7 @@
 #include "render/display_list.h"
 #include "render/text_renderer.h"
 #include <unordered_map>
+#include <vector>
 
 namespace Veltrix {
 
@@ -77,7 +78,7 @@ private:
 
     std::string selectedText() const;
     std::unordered_map<std::string,SDL_Texture*> imageTextures;
-    
+
     void selectWord(int itemIndex,size_t offset);
     void selectLine(int itemIndex);
     void moveCaretHorizontal(int direction,bool extend);
@@ -87,6 +88,18 @@ private:
     void copySelection();
     void renderTextItem(const PaintText& text,int itemIndex);
     void renderCaret();
+    std::vector<std::string> inputValues;
+    int focusedInput=-1;
+    size_t inputCaret=0;
+    size_t inputSelectionStart=0;
+    size_t inputSelectionEnd=0;
+    bool inputSelecting=false;
+
+    bool handleInputMouse(const SDL_Event& event);
+    void handleInputKeyboard(const SDL_Event& event);
+    void handleInputText(const SDL_Event& event);
+    void renderInputCaret();
 };
+
 
 }
