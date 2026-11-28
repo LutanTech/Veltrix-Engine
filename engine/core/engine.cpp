@@ -558,7 +558,7 @@ void Engine::moveCaretToDocumentEnd(bool extend){
 }
 
 void Engine::handleTextKeyboard(const SDL_Event& event){
-    if(event.type!=SDL_EVENT_KEY_DOWN||!textFocus)return;
+    if(event.type!=SDL_EVENT_KEY_DOWN||!textFocus||focusedInput>=0)return;
 
     SDL_Keymod mods=SDL_GetModState();
     bool shift=(mods&SDL_KMOD_SHIFT)!=0;
@@ -715,7 +715,7 @@ bool Engine::handleInputMouse(const SDL_Event& event){
 void Engine::handleInputKeyboard(const SDL_Event& event){
     if(focusedInput<0||focusedInput>=static_cast<int>(inputValues.size())||event.type!=SDL_EVENT_KEY_DOWN)return;
     std::string& value=inputValues[focusedInput];
-    SDL_Keymod mods=SDL_GetModState();
+    SDL_Keymod mods=event.key.mod;
     bool ctrl=(mods&SDL_KMOD_CTRL)!=0;
     bool shift=(mods&SDL_KMOD_SHIFT)!=0;
     size_t start=std::min(inputSelectionStart,inputSelectionEnd);
@@ -725,6 +725,8 @@ void Engine::handleInputKeyboard(const SDL_Event& event){
         inputSelectionStart=0;
         inputSelectionEnd=value.size();
         inputCaret=value.size();
+        inputSelecting=false;
+        caretStartTime=SDL_GetTicks();
         return;
     }
     if(ctrl&&event.key.key==SDLK_C){
@@ -954,7 +956,7 @@ void Engine::run(){
                 if(currentInput>=0&&currentInput<static_cast<int>(inputValues.size())){
                     const std::string& inputValue=inputValues[currentInput];
                     float textHeight=textRenderer.lineHeight(14);
-                    float textY=y+(element.height-textHeight*.57f)*.5f;
+                    float textY=y+(element.height-textHeight)*.5f+textRenderer.baseline(14);
                     PaintText value{element.x+7,textY,14,400,inputValue,{35,35,35,255}};
                     textRenderer.render(value);
                 }
