@@ -297,6 +297,7 @@ void DisplayListBuilder::buildNode(
         if(domNode->computedStyle("font-weight").empty()&&(tag=="h1"||tag=="h2"||tag=="h3"||tag=="h4"||tag=="h5"||tag=="h6"))fontWeight=700;
         Color foreground=parseColor(colorValue);
         std::string background=domNode->computedStyle("background-color");
+        if(background.empty())background=domNode->computedStyle("background");
         Color backgroundColor=background.empty()?Color{0,0,0,0}:parseColor(background,colorValue);
 
         if(backgroundColor.a>0&&node->width>0&&node->height>0)
