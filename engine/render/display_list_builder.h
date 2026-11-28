@@ -21,7 +21,8 @@ private:
         bool insideButton,
         const std::string& inheritedLink="",
         bool inheritedUnderline=false,
-        Color inheritedHoverColor={0,0,0,0}
+        Color inheritedHoverColor={0,0,0,0},
+        uint64_t inheritedLinkId=0
     );
 
     Color parseColor(
