@@ -360,7 +360,7 @@ void DisplayListBuilder::buildNode(
             Color buttonColor=backgroundColor.a?backgroundColor:Color{239,239,239,255};
             std::string label=collectButtonText(domNode);
             if(label.empty())label=domNode->attribute("value");
-            displayList.addElement(PaintElementType::Button,absoluteX,absoluteY,node->width,node->height,buttonColor,"","",label,domNode->attribute("type"));
+            displayList.addElement(PaintElementType::Button,absoluteX,absoluteY,node->width,node->height,buttonColor,"","",label,domNode->attribute("type"),foreground);
         }
     }
 
