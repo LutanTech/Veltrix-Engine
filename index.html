@@ -1,163 +1,141 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Veltrix Engine | Rendering Test</title>
+    <title>Veltrix Box Model Test</title>
     <style>
         body {
-            background-color: #171126;
-            color: #f5f0ff;
             font-family: Arial;
+            margin: 20px;
+            background-color: #f1f1f1;
+            color: #222;
         }
 
-        h1 { color: #ff4fd8; }
-        h2 { color: #a78bfa; }
-
-        .card {
-            background-color: #281d3d;
-            border: 2px solid #8b5cf6;
+        h1 {
+            color: #6c2bd9;
+            border-bottom: 3px solid #6c2bd9;
+            padding-bottom: 10px;
         }
 
-        .pink {
-            background-color: #4a1942;
-            border: 2px solid #ff4fd8;
-            color: #ffb5ed;
-        }
-
-        .blue {
-            background-color: #163b55;
-            border: 3px solid #60a5fa;
-            color: #93c5fd;
-        }
-
-        .green {
-            background-color: #163d2b;
-            border: 2px solid #4ade80;
-            color: #86efac;
-        }
-
-        .nested {
-            background-color: #42245e;
-            border: 2px solid #c084fc;
+        h2 {
+            margin-top: 25px;
+            margin-bottom: 10px;
         }
 
         .box {
-            background-color: #312e81;
-            border: 4px solid #818cf8;
+            background-color: white;
+            border: 1px solid #333;
+            padding: 12px;
+            margin-bottom: 15px;
         }
 
-        .small {
-            background-color: #713f12;
-            border: 2px solid #facc15;
-            color: #fef08a;
+        .first {
+            height: 35px;
+            background-color: #dbeafe;
+            margin-bottom: 30px;
         }
 
-        input {
-            background-color: #ffffff;
-            color: #171126;
+        .second {
+            height: 35px;
+            background-color: #dcfce7;
+            margin-top: 20px;
         }
 
-        button {
-            background-color: #9333ea;
-            color: white;
+        .negative-first {
+            height: 35px;
+            background-color: #fef3c7;
+            margin-bottom: 20px;
+        }
+
+        .negative-second {
+            height: 35px;
+            background-color: #fee2e2;
+            margin-top: -5px;
+        }
+
+        .padding-test {
+            background-color: #e0e7ff;
+            padding-top: 30px;
+            padding-right: 50px;
+            padding-bottom: 15px;
+            padding-left: 10px;
+            border: 2px solid blue;
+        }
+
+        .border-test {
+            background-color: #fce7f3;
+            border-top: 8px solid red;
+            border-right: 5px solid blue;
+            border-bottom: 3px solid green;
+            border-left: 12px solid purple;
+            padding: 15px;
+        }
+
+        .nested {
+            background-color: #ddd6fe;
+            padding: 20px;
+            border: 3px solid purple;
+        }
+
+        .nested-child {
+            background-color: #fef9c3;
+            padding: 10px;
+            margin-top: 20px;
+            border: 2px solid orange;
+        }
+
+        .inline-test {
+            background-color: #cffafe;
+            padding: 15px 30px 10px 20px;
+            border: 3px solid teal;
+        }
+
+        .inline-test span {
+            background-color: yellow;
         }
     </style>
 </head>
 <body>
 
-    <h1>VELTRIX ENGINE</h1>
-    <p>Current rendering capabilities test</p>
+    <h1>Veltrix Box Model Test</h1>
 
-    <hr>
+    <h2>1. Positive Margin Collapsing</h2>
+    <div class="first">Margin bottom: 30px</div>
+    <div class="second">Margin top: 20px</div>
 
-    <h2>1. Text Colors</h2>
-    <div class="card">
-        <p>Default text color</p>
-        <p style="color: red;">Red text</p>
-        <p style="color: blue;">Blue text</p>
-        <p style="color: green;">Green text</p>
-        <p style="color: #ff4fd8;">Hex pink text</p>
-        <p><b>Bold text</b></p>
-        <p><i>Italic text</i></p>
-        <p>Normal <span style="color: cyan;">inline color</span> normal</p>
+    <h2>2. Negative Margin Collapsing</h2>
+    <div class="negative-first">Margin bottom: 20px</div>
+    <div class="negative-second">Margin top: -5px</div>
+
+    <h2>3. Four Sided Padding</h2>
+    <div class="padding-test">
+        Top: 30px<br>
+        Right: 50px<br>
+        Bottom: 15px<br>
+        Left: 10px
     </div>
 
-    <h2>2. Background Colors</h2>
-    <div class="pink">
-        Pink background
+    <h2>4. Individual Border Widths</h2>
+    <div class="border-test">
+        Top: 8px red<br>
+        Right: 5px blue<br>
+        Bottom: 3px green<br>
+        Left: 12px purple
     </div>
 
-    <div class="blue">
-        Blue background
-    </div>
-
-    <div class="green">
-        Green background
-    </div>
-
-    <h2>3. Border Tests</h2>
-    <div style="border: 1px solid red;">
-        One pixel red border
-    </div>
-
-    <div style="border: 3px solid yellow;">
-        Three pixel yellow border
-    </div>
-
-    <div style="border: 5px solid cyan;">
-        Five pixel cyan border
-    </div>
-
-    <h2>4. Nested Containers</h2>
+    <h2>5. Nested Box Model</h2>
     <div class="nested">
-        Outer purple container
-
-        <div class="small">
-            Inner yellow container
-
-            <div class="blue">
-                Deep blue container
-            </div>
+        Parent container
+        <div class="nested-child">
+            Child with 20px top margin and 10px padding
         </div>
     </div>
 
-    <h2>5. Box Dimensions</h2>
-    <div class="box" style="width: 300px; height: 100px;">
-        Large box
-    </div>
-
-    <div class="small" style="width: 150px; height: 60px;">
-        Small box
-    </div>
-
-    <h2>6. Mixed Styling</h2>
-    <div style="background-color: #312e81; border: 3px solid #c084fc;">
-        <h2 style="color: #f0abfc;">Styled heading</h2>
-        <p style="color: white;">White paragraph inside a colored container.</p>
-        <p style="color: #facc15;">Yellow paragraph inside the same container.</p>
-    </div>
-
-    <h2>7. Form Elements</h2>
-    <div class="card">
-        <p>Username</p>
-        <input type="text" value="Lutan">
-
-        <p>Password</p>
-        <input type="password" value="veltrix">
-
-        <p>Submit</p>
-        <button>Test Button</button>
-    </div>
-
-    <h2>8. Spacing</h2>
-    <div style="background-color: #164e63; border: 2px solid cyan; padding: 20px; margin: 20px;">
-        Container with margin and padding
-    </div>
-
-    <hr>
-
-    <h2 style="color: #ff4fd8;">END OF TEST</h2>
-    <p>Veltrix Engine rendering test completed.</p>
+    <h2>6. Inline Padding and Borders</h2>
+    <p>
+        Before the inline element
+        <span class="inline-test">Inline padded content</span>
+        after the inline element.
+    </p>
 
 </body>
 </html>

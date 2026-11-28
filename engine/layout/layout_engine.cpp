@@ -963,6 +963,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             item->paddingTop+
             item->borderTop;
 
+        flow.y=childOriginY;
         flow.x=childOriginX;
 
         float previousBlockMargin=0;
@@ -972,50 +973,70 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             if(!child||child->display=="none")
                 continue;
 
-            if(child->domNode&&
-               child->domNode->type()==NodeType::Text){
-
-                placeInline(
-                    child.get(),
-                    childOriginX,
-                    childOriginY,
-                    item->fontSize,
-                    item->lineHeight
-                );
-
-            }else if(isInlineDisplay(child->display)){
-
-                placeInline(
-                    child.get(),
-                    childOriginX,
-                    childOriginY,
-                    item->fontSize,
-                    item->lineHeight
-                );
-
-            }else{
-                if(flow.x>0||flow.lineHeight>0)
-                    finishLine();
-
-                flow.pendingSpace=false;
-
-                child->x=
-                    item->paddingLeft+
-                    item->borderLeft+
-                    child->marginLeft;
-
-                child->y=
-                    flow.y-
-                    elementOriginY+
-                    child->marginTop;
-
-                flow.y+=
-                    child->height+
-                    child->marginTop+
-                    child->marginBottom;
-            }
+                if(child->domNode&&
+                    child->domNode->type()==NodeType::Text){
+      
+                     if(previousBlock){
+                         flow.y+=previousBlockMargin;
+                         previousBlock=false;
+                         previousBlockMargin=0;
+                     }
+      
+                     placeInline(
+                         child.get(),
+                         childOriginX,
+                         childOriginY,
+                         item->fontSize,
+                         item->lineHeight
+                     );
+      
+                 }else if(isInlineDisplay(child->display)){
+      
+                     if(previousBlock){
+                         flow.y+=previousBlockMargin;
+                         previousBlock=false;
+                         previousBlockMargin=0;
+                     }
+      
+                     placeInline(
+                         child.get(),
+                         childOriginX,
+                         childOriginY,
+                         item->fontSize,
+                         item->lineHeight
+                     );
+      
+                 }else{
+                     if(flow.x>childOriginX||flow.lineHeight>0)
+                         finishLine();
+      
+                     flow.pendingSpace=false;
+      
+                     float collapsedTop=previousBlock?
+                         collapseMargins(previousBlockMargin,child->marginTop):
+                         child->marginTop;
+      
+                     child->x=
+                         item->paddingLeft+
+                         item->borderLeft+
+                         child->marginLeft;
+      
+                     child->y=
+                         flow.y-
+                         elementOriginY+
+                         collapsedTop;
+      
+                     flow.y+=collapsedTop+child->height;
+      
+                     previousBlockMargin=child->marginBottom;
+                     previousBlock=true;
+                 }
         }
+        
+        if(previousBlock)
+        flow.y+=previousBlockMargin;
 
+        
         float consumedWidth=
             flow.x-
             elementOriginX;
@@ -1024,23 +1045,19 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             flow.y-
             elementOriginY;
 
-        item->width=std::max(
-            item->width,
-            consumedWidth+
-            item->paddingLeft+
-            item->paddingRight+
-            item->borderLeft+
-            item->borderRight
-        );
+            item->width=std::max(
+                item->width,
+                consumedWidth+
+                item->paddingRight+
+                item->borderRight
+            );
 
-        item->height=std::max(
-            item->height,
-            consumedHeight+
-            item->paddingTop+
-            item->paddingBottom+
-            item->borderTop+
-            item->borderBottom
-        );
+            item->height=std::max(
+                item->height,
+                consumedHeight+
+                item->paddingBottom+
+                item->borderBottom
+            );
 
         item->contentWidth=std::max(
             0.0f,
@@ -1085,48 +1102,64 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         flow.x+=item->marginRight;
         };
 
-    for(const auto& child:layout->children){
-        if(!child||child->display=="none")
-            continue;
+        float previousBlockMargin=0;
+        bool previousBlock=false;
 
-        bool textNode=
-            child->domNode&&
-            child->domNode->type()==NodeType::Text;
-
-        if(textNode||isInlineDisplay(child->display)){
-            placeInline(
-                child.get(),
-                -contentStartX,
-                -contentStartY,
-                layout->fontSize,
-                layout->lineHeight
-            );
-        }else{
-            if(flow.x>0||flow.lineHeight>0)
-                finishLine();
-
-            flow.pendingSpace=false;
-
-            flow.y+=child->marginTop;
-
-            child->x=
-                contentStartX+
-                child->marginLeft;
-
-            child->y=
-                contentStartY+
-                flow.y;
-
-            flow.y+=
-                child->height+
-                child->marginBottom;
-
-            flow.maximumWidth=std::max(
-                flow.maximumWidth,
-                child->width
-            );
+        for(const auto& child:layout->children){
+            if(!child||child->display=="none")
+                continue;
+     
+            bool textNode=
+                child->domNode&&
+                child->domNode->type()==NodeType::Text;
+     
+            if(textNode||isInlineDisplay(child->display)){
+                if(previousBlock){
+                    flow.y+=previousBlockMargin;
+                    previousBlock=false;
+                    previousBlockMargin=0;
+                }
+     
+                placeInline(
+                    child.get(),
+                    -contentStartX,
+                    -contentStartY,
+                    layout->fontSize,
+                    layout->lineHeight
+                );
+            }else{
+                if(flow.x>0||flow.lineHeight>0)
+                    finishLine();
+     
+                flow.pendingSpace=false;
+     
+                float collapsedTop=previousBlock?
+                    collapseMargins(previousBlockMargin,child->marginTop):
+                    child->marginTop;
+     
+                child->x=
+                    contentStartX+
+                    child->marginLeft;
+     
+                child->y=
+                    contentStartY+
+                    flow.y+
+                    collapsedTop;
+     
+                flow.y+=collapsedTop+child->height;
+     
+                previousBlockMargin=child->marginBottom;
+                previousBlock=true;
+     
+                flow.maximumWidth=std::max(
+                    flow.maximumWidth,
+                    child->width
+                );
+            }
         }
-    }
+     
+        if(previousBlock)
+            flow.y+=previousBlockMargin;
 
     if(flow.x>0||flow.lineHeight>0){
         flow.y+=std::max(
