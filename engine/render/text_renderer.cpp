@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 namespace Veltrix {
@@ -253,6 +254,41 @@ const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
 }
 
 void TextRenderer::render(const PaintText& text){renderRange(text,0,text.text.size());}
+
+std::pair<float,float> TextRenderer::measureRangeBounds(const PaintText& text,size_t start,size_t end){
+    if(!fontManager.face())return {0,0};
+    unsigned int size=static_cast<unsigned int>(std::max(1.0f,text.size));
+    if(!fontManager.setSize(size))return {0,0};
+    FT_Face face=fontManager.face();
+    float cursorX=0,left=std::numeric_limits<float>::max(),right=std::numeric_limits<float>::lowest();
+    FT_UInt previousGlyph=0;
+    for(size_t position=0;position<text.text.size();){
+        size_t glyphStart=position;
+        uint32_t codepoint=nextCodepoint(text.text,position);
+        if(codepoint=='\\r')continue;
+        if(codepoint=='\\n'){cursorX=0;previousGlyph=0;continue;}
+        const CachedGlyph* glyph=getGlyph(codepoint,size,text);
+        if(!glyph){previousGlyph=0;continue;}
+        if(FT_HAS_KERNING(face)&&previousGlyph&&glyph->glyphIndex){
+            FT_Vector kerning;
+            if(FT_Get_Kerning(face,previousGlyph,glyph->glyphIndex,FT_KERNING_DEFAULT,&kerning)==0)cursorX+=static_cast<float>(kerning.x)/64.0f;
+        }
+        if(glyphStart>=start&&glyphStart<end){
+            left=std::min(left,cursorX);
+            right=std::max(right,cursorX+glyph->advance);
+            if(glyph->texture){
+                float width=0,height=0;
+                SDL_GetTextureSize(glyph->texture,&width,&height);
+                left=std::min(left,cursorX+glyph->bitmapLeft);
+                right=std::max(right,cursorX+glyph->bitmapLeft+width);
+            }
+        }
+        cursorX+=glyph->advance;
+        previousGlyph=glyph->glyphIndex;
+    }
+    if(left==std::numeric_limits<float>::max())return {0,0};
+    return {left,right};
+}
 
 void TextRenderer::renderRange(const PaintText& text,size_t start,size_t end){
     if (!renderer || !fontManager.face()) {
