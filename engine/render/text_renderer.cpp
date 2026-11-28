@@ -1,5 +1,6 @@
 
 #include "text_renderer.h"
+#include FT_SYNTHESIS_H
 
 #include <algorithm>
 #include <cstdint>
