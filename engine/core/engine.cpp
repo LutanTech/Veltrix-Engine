@@ -915,7 +915,7 @@ void Engine::run(){
             if(std::abs(targetScrollOffset-scrollOffset)<.1f)scrollOffset=targetScrollOffset;
         }
 
-        SDL_SetRenderDrawColor(renderer,23,17,38,255);
+        SDL_SetRenderDrawColor(renderer,255,255,255,255);
         SDL_RenderClear(renderer);
 
         for(const auto& rect:displayList.rectangles()){
