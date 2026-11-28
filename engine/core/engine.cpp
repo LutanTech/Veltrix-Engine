@@ -47,9 +47,14 @@ std::vector<uint8_t> decodeDataUri(const std::string& source){
     return output;
 }
 SDL_Surface* decodeImageBytes(const std::vector<uint8_t>& bytes){
-    if(bytes.empty()||bytes.size()>static_cast<size_t>(std::numeric_limits<int>::max()))return nullptr;
+    if(bytes.empty()||bytes.size()>static_cast<size_t>(std::numeric_limits<int>::max())){
+        SDL_Log("Image load failed: invalid image data size (%zu bytes)",bytes.size());
+        return nullptr;
+    }
     SDL_IOStream* io=SDL_IOFromConstMem(bytes.data(),static_cast<int>(bytes.size()));
-    return io?IMG_Load_IO(io,true):nullptr;
+    SDL_Surface* surface=io?IMG_Load_IO(io,true):nullptr;
+    if(!surface)SDL_Log("Image load failed: %s",SDL_GetError());
+    return surface;
 }
 
 bool isUtf8Continuation(unsigned char c){return(c&0xC0)==0x80;}
