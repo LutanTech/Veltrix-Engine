@@ -4,6 +4,7 @@
 #include <cctype>
 #include <limits>
 #include <string>
+#include <SDL3_image/SDL_image.h>
 
 namespace Veltrix {
 
@@ -86,6 +87,8 @@ void Engine::updateContentHeight(){
         float h=textRenderer.lineHeight(text.size);
         contentHeight=std::max(contentHeight,text.y+h*.25f);
     }
+    for(const auto& element:displayList.elements())
+    contentHeight=std::max(contentHeight,element.y+element.height);
     int width=0,height=0;
     if(window&&SDL_GetWindowSize(window,&width,&height))
         viewportHeight=static_cast<float>(height);
@@ -641,6 +644,55 @@ void Engine::run(){
             SDL_RenderFillRect(renderer,&destination);
         }
 
+        for(const auto& element:displayList.elements()){
+            float y=element.y-scrollOffset;
+            if(y+element.height<=0||y>=viewportHeight)continue;
+        
+            SDL_FRect destination{element.x,y,element.width,element.height};
+        
+            if(element.type==PaintElementType::HorizontalRule){
+                SDL_SetRenderDrawColor(renderer,element.color.r,element.color.g,element.color.b,element.color.a);
+                SDL_RenderFillRect(renderer,&destination);
+            }else if(element.type==PaintElementType::Image){
+                SDL_Texture* texture=nullptr;
+        
+                if(!element.source.empty()){
+                    auto found=imageTextures.find(element.source);
+                    if(found==imageTextures.end()){
+                        texture=IMG_LoadTexture(renderer,element.source.c_str());
+                        if(texture)imageTextures.emplace(element.source,texture);
+                    }else{
+                        texture=found->second;
+                    }
+                }
+        
+                if(texture){
+                    SDL_RenderTexture(renderer,texture,nullptr,&destination);
+                }else{
+                    SDL_SetRenderDrawColor(renderer,235,235,235,255);
+                    SDL_RenderFillRect(renderer,&destination);
+                    SDL_SetRenderDrawColor(renderer,150,150,150,255);
+                    SDL_RenderRect(renderer,&destination);
+        
+                    if(!element.alt.empty()){
+                        PaintText alt{element.x+5,y+element.height*.5f,13,element.alt,{70,70,70,255}};
+                        textRenderer.render(alt);
+                    }
+                }
+            }else{
+                SDL_SetRenderDrawColor(renderer,element.color.r,element.color.g,element.color.b,element.color.a);
+                SDL_RenderFillRect(renderer,&destination);
+        
+                SDL_SetRenderDrawColor(renderer,130,130,130,255);
+                SDL_RenderRect(renderer,&destination);
+        
+                if(!element.value.empty()){
+                    PaintText value{element.x+6,y+element.height*.5f+5,14,element.value,{35,35,35,255}};
+                    textRenderer.render(value);
+                }
+            }
+        }
+
         renderTextSelection();
 
         const auto& texts=displayList.texts();
@@ -780,6 +832,10 @@ void Engine::handleScrollbar(const SDL_Event& event){
 }
 
 void Engine::shutdown(){
+
+    for(auto& [source,texture]:imageTextures)
+    if(texture)SDL_DestroyTexture(texture);
+    imageTextures.clear();
     textRenderer.shutdown();
 
     if(arrowCursor){

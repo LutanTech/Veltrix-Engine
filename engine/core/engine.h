@@ -2,6 +2,7 @@
 #include <SDL3/SDL.h>
 #include "render/display_list.h"
 #include "render/text_renderer.h"
+#include <unordered_map>
 
 namespace Veltrix {
 
@@ -75,6 +76,8 @@ private:
     ) const;
 
     std::string selectedText() const;
+    std::unordered_map<std::string,SDL_Texture*> imageTextures;
+    
     void selectWord(int itemIndex,size_t offset);
     void selectLine(int itemIndex);
     void moveCaretHorizontal(int direction,bool extend);

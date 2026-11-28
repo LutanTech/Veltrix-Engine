@@ -196,106 +196,25 @@ void DisplayListBuilder::buildNode(
     std::string tag;
 
     if(domNode->type()==NodeType::Element){
-        tag=domNode->name();
-
-        std::string computedColor=domNode->computedStyle("color");
-        if(!computedColor.empty())colorValue=computedColor;
-
+        std::string tag=domNode->name();
         Color foreground=parseColor(colorValue);
         std::string background=domNode->computedStyle("background-color");
         Color backgroundColor=background.empty()?Color{0,0,0,0}:parseColor(background,colorValue);
-
-        if(backgroundColor.a>0){
-            displayList.addRect(
-                absoluteX,
-                absoluteY,
-                node->width,
-                node->height,
-                backgroundColor
-            );
-        }
-
-        Color borderColor=parseColor(
-            domNode->computedStyle("border-color"),
-            colorValue
-        );
-
-        if(borderColor.a>0){
-            if(node->borderTop>0)
-                displayList.addRect(absoluteX,absoluteY,node->width,node->borderTop,borderColor);
-
-            if(node->borderRight>0)
-                displayList.addRect(absoluteX+node->width-node->borderRight,absoluteY,node->borderRight,node->height,borderColor);
-
-            if(node->borderBottom>0)
-                displayList.addRect(absoluteX,absoluteY+node->height-node->borderBottom,node->width,node->borderBottom,borderColor);
-
-            if(node->borderLeft>0)
-                displayList.addRect(absoluteX,absoluteY,node->borderLeft,node->height,borderColor);
-        }
-
+    
         if(tag=="hr"){
-            Color ruleColor=parseColor(
-                domNode->computedStyle("border-color"),
-                colorValue
-            );
-
+            Color ruleColor=parseColor(domNode->computedStyle("border-color"),colorValue);
             if(ruleColor.a==0)ruleColor=foreground;
-
-            displayList.addElement(
-                PaintElementType::HorizontalRule,
-                absoluteX,
-                absoluteY,
-                node->width,
-                node->height,
-                ruleColor
-            );
+            displayList.addElement(PaintElementType::HorizontalRule,absoluteX,absoluteY,node->width,node->height,ruleColor);
         }else if(tag=="img"){
-            displayList.addElement(
-                PaintElementType::Image,
-                absoluteX,
-                absoluteY,
-                node->width,
-                node->height,
-                backgroundColor,
-                domNode->attribute("src"),
-                domNode->attribute("alt")
-            );
+            displayList.addElement(PaintElementType::Image,absoluteX,absoluteY,node->width,node->height,backgroundColor,domNode->attribute("src"),domNode->attribute("alt"));
         }else if(tag=="input"){
             std::string inputType=domNode->attribute("type");
             if(inputType.empty())inputType="text";
-
-            Color inputColor=backgroundColor;
-            if(inputColor.a==0)inputColor={255,255,255,255};
-
-            displayList.addElement(
-                PaintElementType::Input,
-                absoluteX,
-                absoluteY,
-                node->width,
-                node->height,
-                inputColor,
-                "",
-                "",
-                domNode->attribute("value"),
-                inputType
-            );
+            Color inputColor=backgroundColor.a?backgroundColor:Color{255,255,255,255};
+            displayList.addElement(PaintElementType::Input,absoluteX,absoluteY,node->width,node->height,inputColor,"","",domNode->attribute("value"),inputType);
         }else if(tag=="button"){
-            Color buttonColor=backgroundColor;
-            if(buttonColor.a==0)buttonColor={239,239,239,255};
-
-            displayList.addElement(
-                PaintElementType::Button,
-                absoluteX,
-                absoluteY,
-                node->width,
-                node->height,
-                buttonColor,
-                "",
-                "",
-                domNode->attribute("value"),
-                domNode->attribute("type")
-            );
+            Color buttonColor=backgroundColor.a?backgroundColor:Color{239,239,239,255};
+            displayList.addElement(PaintElementType::Button,absoluteX,absoluteY,node->width,node->height,buttonColor,"","",domNode->attribute("value"),domNode->attribute("type"));
         }
     }
 

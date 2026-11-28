@@ -12,6 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(lexbor CONFIG REQUIRED)
+find_package(SDL3_image CONFIG REQUIRED)
 
 add_executable(Veltrix
     engine/main.cpp
@@ -40,3 +41,4 @@ target_link_libraries(Veltrix PRIVATE freetype)
 target_include_directories(Veltrix PRIVATE engine)
 target_link_libraries(Veltrix PRIVATE SDL3::SDL3 lexbor::lexbor)
 target_link_libraries(Veltrix PRIVATE SDL3::SDL3)
+target_link_libraries(Veltrix PRIVATE SDL3::SDL3 lexbor::lexbor SDL3_image::SDL3_image)
