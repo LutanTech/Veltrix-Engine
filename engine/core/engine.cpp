@@ -1088,7 +1088,7 @@ void Engine::renderFrame(){
         SDL_GetMouseState(&pointerX,&pointerY);
         float textWidth=textRenderer.measureText(text.text,text.size);
         for(const auto& link:displayList.elements()){
-            if(link.type!=PaintElementType::Link||link.textColor.a==0)continue;
+            if(link.type!=PaintElementType::Link||link.textColor.a==0||text.linkHref.empty()||text.linkHref!=link.value)continue;
             float linkY=link.y-scrollOffset;
             bool pointerInside=pointerX>=link.x&&pointerX<=link.x+link.width&&pointerY>=linkY&&pointerY<=linkY+link.height;
             bool sameLine=top<linkY+link.height&&bottom>linkY;
