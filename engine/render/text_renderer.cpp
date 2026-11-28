@@ -118,7 +118,8 @@ const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
         text.color.r,
         text.color.g,
         text.color.b,
-        text.color.a
+        text.color.a,
+        static_cast<uint16_t>(text.weight)
     };
 
     auto found = glyphCache.find(key);
@@ -144,6 +145,9 @@ const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
     ) != 0) {
         return nullptr;
     }
+
+    if (text.weight >= 600)
+        FT_GlyphSlot_Embolden(face->glyph);
 
     if (FT_Render_Glyph(
         face->glyph,
