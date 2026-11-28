@@ -284,10 +284,10 @@ void Engine::handleTextMouse(const SDL_Event& event){
         selectionMouseX=event.motion.x;
         selectionMouseY=event.motion.y;
         for(const auto& element:displayList.elements()){
-            if(element.type!=PaintElementType::Button)continue;
+            if(element.type!=PaintElementType::Input&&element.type!=PaintElementType::Button)continue;
             float y=element.y-scrollOffset;
             if(event.motion.x>=element.x&&event.motion.x<=element.x+element.width&&event.motion.y>=y&&event.motion.y<=y+element.height){
-                setTextCursor(false);
+                setTextCursor(element.type==PaintElementType::Input);
                 return;
             }
         }
