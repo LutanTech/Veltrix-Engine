@@ -5,11 +5,54 @@
 #include <limits>
 #include <string>
 #include <utility>
+#include <filesystem>
+#include <vector>
 #include <SDL3_image/SDL_image.h>
+#include <curl/curl.h>
 
 namespace Veltrix {
 
 namespace {
+
+
+size_t receiveImageData(char* data,size_t size,size_t count,void* user){
+    auto* bytes=static_cast<std::vector<uint8_t>*>(user);
+    size_t length=size*count;
+    bytes->insert(bytes->end(),data,data+length);
+    return length;
+}
+std::vector<uint8_t> decodeBase64(const std::string& input){
+    static const std::string chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::vector<uint8_t> output;
+    int value=0,bits=-8;
+    for(unsigned char c:input){
+        if(c=='=')break;
+        size_t index=chars.find(c);
+        if(index==std::string::npos)continue;
+        value=(value<<6)|static_cast<int>(index);
+        bits+=6;
+        if(bits>=0){output.push_back(static_cast<uint8_t>((value>>bits)&255));bits-=8;}
+    }
+    return output;
+}
+std::vector<uint8_t> decodeDataUri(const std::string& source){
+    size_t comma=source.find(',');
+    if(comma==std::string::npos)return {};
+    std::string metadata=source.substr(5,comma-5),data=source.substr(comma+1);
+    if(metadata.find(";base64")!=std::string::npos)return decodeBase64(data);
+    std::vector<uint8_t> output;
+    for(size_t i=0;i<data.size();++i){
+        if(data[i]=='%'&&i+2<data.size()){
+            try{output.push_back(static_cast<uint8_t>(std::stoi(data.substr(i+1,2),nullptr,16)));i+=2;}catch(...){output.push_back('%');}
+        }else output.push_back(static_cast<uint8_t>(data[i]));
+    }
+    return output;
+}
+SDL_Surface* decodeImageBytes(const std::vector<uint8_t>& bytes){
+    if(bytes.empty()||bytes.size()>static_cast<size_t>(std::numeric_limits<int>::max()))return nullptr;
+    SDL_IOStream* io=SDL_IOFromConstMem(bytes.data(),static_cast<int>(bytes.size()));
+    return io?IMG_Load_IO(io,true):nullptr;
+}
 
 bool isUtf8Continuation(unsigned char c){return(c&0xC0)==0x80;}
 
@@ -52,6 +95,7 @@ bool isWhitespaceCharacter(const std::string& text,size_t offset){
 
 bool Engine::initialize(){
     if(!SDL_Init(SDL_INIT_VIDEO))return false;
+    curl_global_init(CURL_GLOBAL_DEFAULT);
     SDL_DisplayID display=SDL_GetPrimaryDisplay();
     const SDL_DisplayMode* mode=SDL_GetCurrentDisplayMode(display);
     int width=mode?static_cast<int>(mode->w*.85f):1100;
@@ -81,6 +125,66 @@ void Engine::setResizeHandler(std::function<DisplayList(float,float)> handler){r
 void Engine::getViewportSize(float& width,float& height) const{
     width=viewportWidth;
     height=viewportHeight;
+}
+
+
+void Engine::setDocumentBasePath(const std::string& path){
+    std::error_code error;
+    documentBasePath=std::filesystem::absolute(path,error).parent_path().string();
+    if(error)documentBasePath=std::filesystem::current_path().string();
+}
+void Engine::registerBlob(const std::string& url,const std::vector<uint8_t>& data){
+    if(url.rfind("blob:",0)==0&&!data.empty())blobResources[url]=data;
+    auto found=imageTextures.find(url);
+    if(found!=imageTextures.end()){SDL_DestroyTexture(found->second);imageTextures.erase(found);}
+}
+void Engine::revokeBlob(const std::string& url){
+    blobResources.erase(url);
+    auto found=imageTextures.find(url);
+    if(found!=imageTextures.end()){SDL_DestroyTexture(found->second);imageTextures.erase(found);}
+}
+SDL_Texture* Engine::loadImageTexture(const std::string& source){
+    if(source.empty())return nullptr;
+    auto cached=imageTextures.find(source);
+    if(cached!=imageTextures.end())return cached->second;
+    std::vector<uint8_t> bytes;
+    SDL_Surface* surface=nullptr;
+    if(source.rfind("blob:",0)==0){
+        auto found=blobResources.find(source);
+        if(found!=blobResources.end())surface=decodeImageBytes(found->second);
+    }else if(source.rfind("data:",0)==0){
+        bytes=decodeDataUri(source);
+        surface=decodeImageBytes(bytes);
+    }else if(source.rfind("http://",0)==0||source.rfind("https://",0)==0){
+        CURL* curl=curl_easy_init();
+        if(curl){
+            curl_easy_setopt(curl,CURLOPT_URL,source.c_str());
+            curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION,1L);
+            curl_easy_setopt(curl,CURLOPT_MAXREDIRS,8L);
+            curl_easy_setopt(curl,CURLOPT_PROTOCOLS_STR,"http,https");
+            curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,receiveImageData);
+            curl_easy_setopt(curl,CURLOPT_WRITEDATA,&bytes);
+            curl_easy_setopt(curl,CURLOPT_USERAGENT,"Veltrix/0.1");
+            curl_easy_setopt(curl,CURLOPT_CONNECTTIMEOUT,15L);
+            curl_easy_setopt(curl,CURLOPT_TIMEOUT,30L);
+            CURLcode result=curl_easy_perform(curl);
+            long status=0;
+            curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&status);
+            curl_easy_cleanup(curl);
+            if(result==CURLE_OK&&status>=200&&status<300)surface=decodeImageBytes(bytes);
+        }
+    }else{
+        std::string path=source;
+        if(path.rfind("file://",0)==0)path=path.substr(7);
+        std::filesystem::path filePath(path);
+        if(filePath.is_relative()&&!documentBasePath.empty())filePath=std::filesystem::path(documentBasePath)/filePath;
+        surface=IMG_Load(filePath.string().c_str());
+    }
+    if(!surface)return nullptr;
+    SDL_Texture* texture=SDL_CreateTextureFromSurface(renderer,surface);
+    SDL_DestroySurface(surface);
+    if(texture)imageTextures.emplace(source,texture);
+    return texture;
 }
 
 void Engine::setDisplayList(const DisplayList& list){
@@ -1000,17 +1104,7 @@ void Engine::renderFrame(){
             SDL_SetRenderDrawColor(renderer,element.color.r,element.color.g,element.color.b,element.color.a);
             SDL_RenderFillRect(renderer,&destination);
         }else if(element.type==PaintElementType::Image){
-            SDL_Texture* texture=nullptr;
-    
-            if(!element.source.empty()){
-                auto found=imageTextures.find(element.source);
-                if(found==imageTextures.end()){
-                    texture=IMG_LoadTexture(renderer,element.source.c_str());
-                    if(texture)imageTextures.emplace(element.source,texture);
-                }else{
-                    texture=found->second;
-                }
-            }
+            SDL_Texture* texture=loadImageTexture(element.source);
     
             if(texture){
                 SDL_RenderTexture(renderer,texture,nullptr,&destination);
@@ -1285,6 +1379,8 @@ void Engine::shutdown(){
     if(texture)SDL_DestroyTexture(texture);
     imageTextures.clear();
     textRenderer.shutdown();
+    blobResources.clear();
+    curl_global_cleanup();
 
     if(arrowCursor){
         SDL_DestroyCursor(arrowCursor);
