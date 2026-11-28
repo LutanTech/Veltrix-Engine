@@ -398,7 +398,8 @@ void DisplayListBuilder::buildNode(
                     fontWeight,
                     fragment.text,
                     parseColor(colorValue),
-                    underline
+                    underline,
+                    linkHref
                 );
             }
         }else{
@@ -418,7 +419,8 @@ void DisplayListBuilder::buildNode(
                     fontWeight,
                     content,
                     parseColor(colorValue),
-                    underline
+                    underline,
+                    linkHref
                 );
             }
         }
