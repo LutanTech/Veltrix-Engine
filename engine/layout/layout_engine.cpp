@@ -20,7 +20,7 @@ float parseNumber(const std::string& value,float fallback=0){
 }
 
 float collapseMargins(float a,float b){
-    return std::max(a,b)+std::min(std::min(a,b),0.0f);
+    return std::max(std::max(a,b),0.0f)+std::min(std::min(a,b),0.0f);
 }
 
 std::string lower(const std::string& value){
@@ -77,12 +77,19 @@ void parseBox(Node* node,const char* property,float& top,float& right,float& bot
 void parseBorders(Node* node,float& top,float& right,float& bottom,float& left){
     if(!node)return;
 
+    std::string shorthand=node->computedStyle("border");
+    if(!shorthand.empty()){
+        size_t position=shorthand.find_first_of("0123456789.");
+        if(position!=std::string::npos){
+            float width=parseNumber(shorthand.substr(position),0);
+            top=right=bottom=left=width;
+        }
+    }
+
     std::string borderWidth=node->computedStyle("border-width");
     if(!borderWidth.empty())expandBox(borderWidth,top,right,bottom,left);
 
-    std::string value;
-
-    value=node->computedStyle("border-top-width");
+    std::string value=node->computedStyle("border-top-width");
     if(!value.empty())top=parseNumber(value,top);
 
     value=node->computedStyle("border-right-width");
@@ -93,16 +100,6 @@ void parseBorders(Node* node,float& top,float& right,float& bottom,float& left){
 
     value=node->computedStyle("border-left-width");
     if(!value.empty())left=parseNumber(value,left);
-
-    std::string shorthand=node->computedStyle("border");
-
-    if(!shorthand.empty()&&borderWidth.empty()){
-        size_t position=shorthand.find_first_of("0123456789.");
-        if(position!=std::string::npos){
-            float width=parseNumber(shorthand.substr(position),0);
-            top=right=bottom=left=width;
-        }
-    }
 }
 
 std::string defaultDisplay(const std::string& tag){
@@ -908,6 +905,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
         float startX=flow.x;
         float startY=flow.y;
+        float outerFlowY=startY;
 
         float referenceLineHeight=std::max(
             parentLineHeight,
@@ -1076,6 +1074,8 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             item->borderTop-
             item->borderBottom
         );
+
+        flow.y=outerFlowY+std::max(0.0f,flow.y-childOriginY);
 
         float verticalExtent=std::max(
             item->height+alignmentOffset,
