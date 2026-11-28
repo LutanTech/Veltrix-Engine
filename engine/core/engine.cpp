@@ -595,6 +595,39 @@ void Engine::handleTextKeyboard(const SDL_Event& event){
 }
 
 bool Engine::handleInputMouse(const SDL_Event& event){
+    if(event.type==SDL_EVENT_MOUSE_MOTION){
+        mouseX=event.motion.x;
+        mouseY=event.motion.y;
+        hoveredButton=-1;
+        int buttonIndex=0;
+        for(const auto& element:displayList.elements()){
+            if(element.type==PaintElementType::Button){
+                float y=element.y-scrollOffset;
+                if(mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height)
+                    hoveredButton=buttonIndex;
+                ++buttonIndex;
+            }
+        }
+    }
+    if(event.type==SDL_EVENT_MOUSE_BUTTON_DOWN&&event.button.button==SDL_BUTTON_LEFT){
+        mouseX=event.button.x;
+        mouseY=event.button.y;
+        pressedButton=-1;
+        int buttonIndex=0;
+        for(const auto& element:displayList.elements()){
+            if(element.type==PaintElementType::Button){
+                float y=element.y-scrollOffset;
+                if(mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height){
+                    pressedButton=buttonIndex;
+                    break;
+                }
+                ++buttonIndex;
+            }
+        }
+    }
+    if(event.type==SDL_EVENT_MOUSE_BUTTON_UP&&event.button.button==SDL_BUTTON_LEFT)
+        pressedButton=-1;
+
     const auto& elements=displayList.elements();
     auto findInput=[&](int index)->const PaintElement*{
         int current=0;
@@ -915,17 +948,47 @@ void Engine::run(){
                         textRenderer.render(alt);
                     }
                 }
-            }else{
+            }else if(element.type==PaintElementType::Input){
                 SDL_SetRenderDrawColor(renderer,element.color.r,element.color.g,element.color.b,element.color.a);
                 SDL_RenderFillRect(renderer,&destination);
-        
-                SDL_SetRenderDrawColor(renderer,130,130,130,255);
-                SDL_RenderRect(renderer,&destination);
-        
                 if(currentInput>=0&&currentInput<static_cast<int>(inputValues.size())){
                     const std::string& inputValue=inputValues[currentInput];
-                    PaintText value{element.x+6,y+element.height*.5f+5,14,400,inputValue,{35,35,35,255}};
+                    float textHeight=textRenderer.lineHeight(14);
+                    float textY=y+(element.height-textHeight*.57f)*.5f;
+                    PaintText value{element.x+7,textY,14,400,inputValue,{35,35,35,255}};
                     textRenderer.render(value);
+                }
+                if(currentInput==focusedInput){
+                    SDL_SetRenderDrawColor(renderer,50,120,220,255);
+                    SDL_RenderRect(renderer,&destination);
+                }
+            }else if(element.type==PaintElementType::Button){
+                int buttonIndex=0;
+                for(const auto& candidate:displayList.elements()){
+                    if(candidate.type==PaintElementType::Button){
+                        if(&candidate==&element)break;
+                        ++buttonIndex;
+                    }
+                }
+                bool isHovered=buttonIndex==hoveredButton;
+                bool isPressed=buttonIndex==pressedButton;
+                Color fill=element.color;
+                if(isPressed){
+                    fill={static_cast<uint8_t>(std::max(0,static_cast<int>(fill.r)-25)),static_cast<uint8_t>(std::max(0,static_cast<int>(fill.g)-25)),static_cast<uint8_t>(std::max(0,static_cast<int>(fill.b)-25)),fill.a};
+                }else if(isHovered){
+                    fill={static_cast<uint8_t>(std::min(255,static_cast<int>(fill.r)+10)),static_cast<uint8_t>(std::min(255,static_cast<int>(fill.g)+10)),static_cast<uint8_t>(std::min(255,static_cast<int>(fill.b)+10)),fill.a};
+                }
+                SDL_SetRenderDrawColor(renderer,fill.r,fill.g,fill.b,fill.a);
+                SDL_RenderFillRect(renderer,&destination);
+                SDL_SetRenderDrawColor(renderer,isPressed?90:130,isPressed?90:130,isPressed?90:130,255);
+                SDL_RenderRect(renderer,&destination);
+                if(!element.value.empty()){
+                    float width=textRenderer.measureText(element.value,14);
+                    float textHeight=textRenderer.lineHeight(14);
+                    float textX=element.x+(element.width-width)*.5f;
+                    float textY=y+(element.height-textHeight*.57f)*.5f;
+                    PaintText label{textX,textY,14,400,element.value,{35,35,35,255}};
+                    textRenderer.render(label);
                 }
             }
         }
