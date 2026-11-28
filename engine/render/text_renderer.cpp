@@ -256,9 +256,9 @@ const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
 void TextRenderer::render(const PaintText& text){renderRange(text,0,text.text.size());}
 
 std::pair<float,float> TextRenderer::measureRangeBounds(const PaintText& text,size_t start,size_t end){
-    if(!fontManager.face())return {0,0};
+    if(!fontManager.face())return {0.0f,0.0f};
     unsigned int size=static_cast<unsigned int>(std::max(1.0f,text.size));
-    if(!fontManager.setSize(size))return {0,0};
+    if(!fontManager.setSize(size))return {0.0f,0.0f};
     FT_Face face=fontManager.face();
     float cursorX=0,left=std::numeric_limits<float>::max(),right=std::numeric_limits<float>::lowest();
     FT_UInt previousGlyph=0;
@@ -286,7 +286,7 @@ std::pair<float,float> TextRenderer::measureRangeBounds(const PaintText& text,si
         cursorX+=glyph->advance;
         previousGlyph=glyph->glyphIndex;
     }
-    if(left==std::numeric_limits<float>::max())return {0,0};
+    if(left==std::numeric_limits<float>::max())return {0.0f,0.0f};
     return {left,right};
 }
 
