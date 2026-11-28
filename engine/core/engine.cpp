@@ -1086,11 +1086,14 @@ void Engine::renderFrame(){
         PaintText visibleText=text;
         float pointerX=0,pointerY=0;
         SDL_GetMouseState(&pointerX,&pointerY);
+        float textWidth=textRenderer.measureText(text.text,text.size);
         for(const auto& link:displayList.elements()){
+            if(link.type!=PaintElementType::Link||link.textColor.a==0)continue;
             float linkY=link.y-scrollOffset;
-            if(link.type==PaintElementType::Link&&link.textColor.a>0&&pointerX>=link.x&&pointerX<=link.x+link.width&&pointerY>=linkY&&pointerY<=linkY+link.height){
-                if(text.x>=link.x&&text.x<=link.x+link.width)visibleText.color=link.textColor;
-            }
+            bool pointerInside=pointerX>=link.x&&pointerX<=link.x+link.width&&pointerY>=linkY&&pointerY<=linkY+link.height;
+            bool sameLine=top<linkY+link.height&&bottom>linkY;
+            bool overlapsText=text.x<link.x+link.width&&text.x+textWidth>link.x;
+            if(pointerInside&&sameLine&&overlapsText)visibleText.color=link.textColor;
         }
         renderTextItem(visibleText,static_cast<int>(i));
         if(visibleText.underline){
