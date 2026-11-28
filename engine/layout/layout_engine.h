@@ -15,7 +15,8 @@ public:
 
     std::unique_ptr<LayoutNode> build(
         Node* root,
-        float viewportWidth
+        float viewportWidth,
+        float viewportHeight = 800
     );
 
 private:
@@ -26,6 +27,7 @@ private:
     std::unique_ptr<LayoutNode> buildNode(
         Node* node,
         float availableWidth,
+        float availableHeight,
         float inheritedFontSize,
         int inheritedFontWeight
     );
