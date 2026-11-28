@@ -334,7 +334,9 @@ void Engine::handleTextMouse(const SDL_Event& event){
                 setTextCursor(false);
                 if(!it->value.empty()&&it->value[0]=='#'){
                     std::string target=it->value.substr(1);
-                    for(const auto& anchor:displayList.elements()){
+                    if(target.empty()||target=="top")targetScrollOffset=0;
+                    else if(target=="bottom")targetScrollOffset=std::max(0.0f,contentHeight-viewportHeight);
+                    else for(const auto& anchor:displayList.elements()){
                         if(anchor.type==PaintElementType::Anchor&&anchor.value==target){
                             targetScrollOffset=std::clamp(anchor.y,0.0f,std::max(0.0f,contentHeight-viewportHeight));
                             break;
