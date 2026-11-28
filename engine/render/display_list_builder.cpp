@@ -314,7 +314,7 @@ void DisplayListBuilder::buildNode(
             borderStyles[i]=domNode->computedStyle(std::string("border-")+sides[i]+"-style");
             if(borderStyles[i].empty())borderStyles[i]=borderBoxValue(commonStyle,i);
             if(borderStyles[i].empty())borderStyles[i]=shorthandStyle;
-            if(borderStyles[i].empty())borderStyles[i]="solid";
+            if(borderStyles[i].empty())borderStyles[i]="none";
         }
         addBorders(
             displayList,absoluteX,absoluteY,node->width,node->height,
