@@ -20,7 +20,8 @@ private:
         int inheritedWeight,
         bool insideButton,
         const std::string& inheritedLink="",
-        bool inheritedUnderline=false
+        bool inheritedUnderline=false,
+        Color inheritedHoverColor={0,0,0,0}
     );
 
     Color parseColor(
