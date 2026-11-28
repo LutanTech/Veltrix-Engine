@@ -29,6 +29,7 @@ private:
         uint8_t g = 0;
         uint8_t b = 0;
         uint8_t a = 255;
+        uint16_t weight = 400;
 
         bool operator==(const GlyphKey& other) const {
             return codepoint == other.codepoint &&
@@ -36,7 +37,8 @@ private:
                    r == other.r &&
                    g == other.g &&
                    b == other.b &&
-                   a == other.a;
+                   a == other.a &&
+                   weight == other.weight;
         }
     };
 
@@ -48,6 +50,7 @@ private:
             hash = hash * 31 + key.g;
             hash = hash * 31 + key.b;
             hash = hash * 31 + key.a;
+            hash = hash * 31 + key.weight;
             return hash;
         }
     };
