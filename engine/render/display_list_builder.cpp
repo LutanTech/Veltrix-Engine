@@ -259,9 +259,19 @@ const std::unordered_map<std::string, uint32_t>& namedColors() {
  return colors;
 }
 }
+namespace {
+std::string collectButtonText(const Node* node){
+    if(!node)return "";
+    if(node->type()==NodeType::Text)return node->text();
+    std::string text;
+    for(const auto& child:node->children())text+=collectButtonText(child.get());
+    return text;
+}
+}
+
 DisplayList DisplayListBuilder::build(const LayoutNode* root) {
  DisplayList displayList;
- buildNode(root, displayList, 0, 0, "black", 400);
+ buildNode(root, displayList, 0, 0, "black", 400, false);
  return displayList;
 }
 
@@ -271,7 +281,8 @@ void DisplayListBuilder::buildNode(
     float parentX,
     float parentY,
     const std::string& inheritedColor,
-    int inheritedWeight
+    int inheritedWeight,
+    bool insideButton
 ){
     if(!node||!node->domNode)return;
 
@@ -347,11 +358,14 @@ void DisplayListBuilder::buildNode(
             displayList.addElement(PaintElementType::Input,absoluteX,absoluteY,node->width,node->height,inputColor,"","",domNode->attribute("value"),inputType);
         }else if(tag=="button"){
             Color buttonColor=backgroundColor.a?backgroundColor:Color{239,239,239,255};
-            displayList.addElement(PaintElementType::Button,absoluteX,absoluteY,node->width,node->height,buttonColor,"","",domNode->attribute("value"),domNode->attribute("type"));
+            std::string label=collectButtonText(domNode);
+            if(label.empty())label=domNode->attribute("value");
+            displayList.addElement(PaintElementType::Button,absoluteX,absoluteY,node->width,node->height,buttonColor,"","",label,domNode->attribute("type"));
         }
     }
 
     if(domNode->type()==NodeType::Text){
+        if(insideButton)return;
         if(!node->textFragments.empty()){
             for(const auto& fragment:node->textFragments){
                 if(fragment.text.empty())continue;
@@ -396,7 +410,8 @@ void DisplayListBuilder::buildNode(
             absoluteX,
             absoluteY,
             colorValue,
-            fontWeight
+            fontWeight,
+            insideButton||tag=="button"
         );
     }
 }
