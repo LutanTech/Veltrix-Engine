@@ -658,13 +658,26 @@ bool Engine::handleInputMouse(const SDL_Event& event){
             if(element.type!=PaintElementType::Input)continue;
             float y=element.y-scrollOffset;
             if(mouseX>=element.x&&mouseX<=element.x+element.width&&mouseY>=y&&mouseY<=y+element.height){
+                Uint64 now=SDL_GetTicks();
                 if(focusedInput!=inputIndex){
                     focusedInput=inputIndex;
                     inputCaret=inputValues[inputIndex].size();
+                    inputClickCount=1;
+                }else{
+                    inputClickCount=now-lastInputClickTime<=500?inputClickCount+1:1;
                 }
+                lastInputClickTime=now;
                 inputCaret=offsetAt(element,inputValues[inputIndex],mouseX);
-                inputSelectionStart=inputSelectionEnd=inputCaret;
-                inputSelecting=true;
+                if(inputClickCount>=2){
+                    inputSelectionStart=0;
+                    inputSelectionEnd=inputValues[inputIndex].size();
+                    inputCaret=inputSelectionEnd;
+                    inputSelecting=false;
+                    inputClickCount=0;
+                }else{
+                    inputSelectionStart=inputSelectionEnd=inputCaret;
+                    inputSelecting=true;
+                }
                 textFocus=false;
                 textSelecting=false;
                 clearSelection();
@@ -678,6 +691,7 @@ bool Engine::handleInputMouse(const SDL_Event& event){
         if(focusedInput>=0){
             focusedInput=-1;
             inputSelecting=false;
+            inputClickCount=0;
             SDL_StopTextInput(window);
         }
         return false;
