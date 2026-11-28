@@ -17,14 +17,19 @@ namespace {
 std::vector<uint8_t> decodeBase64(const std::string& input){
     static const std::string chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     std::vector<uint8_t> output;
-    int value=0,bits=-8;
+    uint32_t value=0;
+    int bits=0;
     for(unsigned char c:input){
         if(c=='=')break;
         size_t index=chars.find(c);
         if(index==std::string::npos)continue;
-        value=(value<<6)|static_cast<int>(index);
+        value=(value<<6)|static_cast<uint32_t>(index);
         bits+=6;
-        if(bits>=0){output.push_back(static_cast<uint8_t>((value>>bits)&255));bits-=8;}
+        if(bits>=8){
+            bits-=8;
+            output.push_back(static_cast<uint8_t>((value>>bits)&255));
+            value&=(1u<<bits)-1;
+        }
     }
     return output;
 }
