@@ -23,6 +23,7 @@ private:
     SDL_Renderer* renderer=nullptr;
     SDL_Cursor* arrowCursor=nullptr;
     SDL_Cursor* textCursor=nullptr;
+    SDL_Cursor* linkCursor=nullptr;
     DisplayList displayList;
     TextRenderer textRenderer;
 
