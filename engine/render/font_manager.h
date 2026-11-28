@@ -16,7 +16,7 @@ public:
     FT_Face face() const;
     bool setSize(unsigned int size);
 
-    float measureText(const std::string& text, unsigned int size);
+    float measureText(const std::string& text, unsigned int size, unsigned int weight = 400);
     float lineHeight(unsigned int size);
 
 private:

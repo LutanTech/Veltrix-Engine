@@ -1,5 +1,6 @@
 #include "display_list_builder.h"
 #include <algorithm>
+#include <cstdint>
 #include <cctype>
 #include <cmath>
 #include <cstdint>
@@ -23,64 +24,88 @@ double parseNumber(const std::string& value, double fallback = 0) {
  return result;
 }
 
-Color parseBorderColor(const std::string& value){
-    static const std::unordered_map<std::string,Color> colors={
-        {"black",{0,0,0,255}},
-        {"white",{255,255,255,255}},
-        {"red",{255,0,0,255}},
-        {"green",{0,128,0,255}},
-        {"blue",{0,0,255,255}},
-        {"pink",{255,192,203,255}},
-        {"magenta",{255,0,255,255}},
-        {"purple",{128,0,128,255}},
-        {"yellow",{255,255,0,255}},
-        {"gray",{128,128,128,255}},
-        {"grey",{128,128,128,255}}
-    };
-    std::string name=trim(value);
-    std::transform(name.begin(),name.end(),name.begin(),[](unsigned char c){return static_cast<char>(std::tolower(c));});
-    auto it=colors.find(name);
-    if(it!=colors.end())return it->second;
-    if(name.size()==7&&name[0]=='#'){
-        try{
-            uint32_t rgb=std::stoul(name.substr(1),nullptr,16);
-            return {static_cast<uint8_t>(rgb>>16),static_cast<uint8_t>(rgb>>8),static_cast<uint8_t>(rgb),255};
-        }catch(...){}
-    }
-    return {0,0,0,255};
-}
-
-float parseBorderWidth(const std::string& value){
-    char* end=nullptr;
-    float width=std::strtof(value.c_str(),&end);
-    return end==value.c_str()?0.0f:std::max(0.0f,width);
-}
-
-void addBorders(DisplayList& displayList,float x,float y,float width,float height,const std::string& border){
-    if(border.empty()||border=="none")return;
-    float thickness=0;
-    std::string style,color;
-    size_t position=0;
-    while(position<border.size()){
-        while(position<border.size()&&std::isspace(static_cast<unsigned char>(border[position])))position++;
-        size_t end=border.find(' ',position);
-        if(end==std::string::npos)end=border.size();
-        std::string part=border.substr(position,end-position);
-        if(part.empty())break;
-        if(part=="solid"||part=="dashed"||part=="dotted"||part=="double"||part=="none"||part=="hidden")style=part;
-        else if(std::isdigit(static_cast<unsigned char>(part[0]))||part[0]=='.')thickness=parseBorderWidth(part);
-        else{
-            if(!color.empty())color+=" ";
-            color+=part;
+std::vector<std::string> splitBorderTokens(const std::string& value){
+    std::vector<std::string> tokens;
+    std::string token;
+    int depth=0;
+    for(char c:value){
+        if(std::isspace(static_cast<unsigned char>(c))&&depth==0){
+            if(!token.empty()){
+                tokens.push_back(token);
+                token.clear();
+            }
+        }else{
+            token+=c;
+            if(c=='(')depth++;
+            else if(c==')'&&depth>0)depth--;
         }
-        position=end+1;
     }
-    if(thickness<=0||style=="none"||style=="hidden")return;
-    Color borderColor=parseBorderColor(color.empty()?"black":color);
-    displayList.addRect(x,y,width,thickness,borderColor);
-    displayList.addRect(x,y+height-thickness,width,thickness,borderColor);
-    displayList.addRect(x,y+thickness,thickness,height-thickness*2,borderColor);
-    displayList.addRect(x+width-thickness,y+thickness,thickness,height-thickness*2,borderColor);
+    if(!token.empty())tokens.push_back(token);
+    return tokens;
+}
+
+std::string borderBoxValue(const std::string& value,int side){
+    auto values=splitBorderTokens(value);
+    if(values.empty())return "";
+    if(values.size()==1)return values[0];
+    if(values.size()==2)return values[side==0||side==2?0:1];
+    if(values.size()==3)return values[side==0?0:side==2?2:1];
+    return values[side];
+}
+
+std::string shorthandBorderStyle(const std::string& border){
+    for(const auto& token:splitBorderTokens(border)){
+        if(token=="none"||token=="hidden"||token=="dotted"||token=="dashed"||token=="solid"||token=="double"||token=="groove"||token=="ridge"||token=="inset"||token=="outset")return token;
+    }
+    return "";
+}
+
+std::string shorthandBorderColor(const std::string& border){
+    for(const auto& token:splitBorderTokens(border)){
+        if(token=="none"||token=="hidden"||token=="dotted"||token=="dashed"||token=="solid"||token=="double"||token=="groove"||token=="ridge"||token=="inset"||token=="outset")continue;
+        if(token=="thin"||token=="medium"||token=="thick")continue;
+        if(!token.empty()&&(std::isdigit(static_cast<unsigned char>(token[0]))||token[0]=='.'))continue;
+        return token;
+    }
+    return "";
+}
+
+void addBorderSide(DisplayList& displayList,float x,float y,float length,float thickness,bool horizontal,const Color& color,const std::string& style){
+    if(length<=0||thickness<=0||style=="none"||style=="hidden")return;
+    auto draw=[&](float offset,float segment,float band){
+        if(segment<=0||band<=0)return;
+        if(horizontal)displayList.addRect(x+offset,y,segment,band,color);
+        else displayList.addRect(x,y+offset,band,segment,color);
+    };
+    if(style=="double"&&thickness>=3){
+        float band=std::max(1.0f,thickness/3.0f);
+        draw(0,length,band);
+        if(horizontal)displayList.addRect(x,y+thickness-band,length,band,color);
+        else displayList.addRect(x+thickness-band,y,band,length,color);
+        return;
+    }
+    if(style=="dashed"||style=="dotted"){
+        float segment=style=="dotted"?thickness:thickness*3.0f;
+        float gap=thickness*2.0f;
+        for(float offset=0;offset<length;offset+=segment+gap)
+            draw(offset,std::min(segment,length-offset),thickness);
+        return;
+    }
+    draw(0,length,thickness);
+}
+
+void addBorders(DisplayList& displayList,float x,float y,float width,float height,
+                float top,float right,float bottom,float left,
+                const Color& topColor,const Color& rightColor,const Color& bottomColor,const Color& leftColor,
+                const std::string& topStyle,const std::string& rightStyle,const std::string& bottomStyle,const std::string& leftStyle){
+    top=std::clamp(top,0.0f,std::max(0.0f,height));
+    bottom=std::clamp(bottom,0.0f,std::max(0.0f,height-top));
+    left=std::clamp(left,0.0f,std::max(0.0f,width));
+    right=std::clamp(right,0.0f,std::max(0.0f,width-left));
+    addBorderSide(displayList,x,y,width,top,true,topColor,topStyle);
+    addBorderSide(displayList,x+width-right,y+top,std::max(0.0f,height-top-bottom),right,false,rightColor,rightStyle);
+    addBorderSide(displayList,x,y+height-bottom,width,bottom,true,bottomColor,bottomStyle);
+    addBorderSide(displayList,x,y+top,std::max(0.0f,height-top-bottom),left,false,leftColor,leftStyle);
 }
 
 double clamp(double value, double minimum, double maximum) {
@@ -235,9 +260,19 @@ const std::unordered_map<std::string, uint32_t>& namedColors() {
  return colors;
 }
 }
+namespace {
+std::string collectButtonText(const Node* node){
+    if(!node)return "";
+    if(node->type()==NodeType::Text)return node->text();
+    std::string text;
+    for(const auto& child:node->children())text+=collectButtonText(child.get());
+    return text;
+}
+}
+
 DisplayList DisplayListBuilder::build(const LayoutNode* root) {
  DisplayList displayList;
- buildNode(root, displayList, 0, 0, "black");
+ buildNode(root, displayList, 0, 0, "black", 400, false, "", false, {0,0,0,0}, 0);
  return displayList;
 }
 
@@ -246,7 +281,13 @@ void DisplayListBuilder::buildNode(
     DisplayList& displayList,
     float parentX,
     float parentY,
-    const std::string& inheritedColor
+    const std::string& inheritedColor,
+    int inheritedWeight,
+    bool insideButton,
+    const std::string& inheritedLink,
+    bool inheritedUnderline,
+    Color inheritedHoverColor,
+    uint64_t inheritedLinkId
 ){
     if(!node||!node->domNode)return;
 
@@ -256,23 +297,78 @@ void DisplayListBuilder::buildNode(
     
     std::string colorValue=inheritedColor;
     std::string tag;
+    std::string linkHref=inheritedLink;
+    bool underline=inheritedUnderline;
+    Color hoverColor=inheritedHoverColor;
+    uint64_t linkId=inheritedLinkId;
+    int fontWeight=inheritedWeight;
 
     if(domNode->type()==NodeType::Element){
         std::string computedColor=domNode->computedStyle("color");
         if(!computedColor.empty())colorValue=computedColor;
+        std::string computedWeight=domNode->computedStyle("font-weight");
+        if(computedWeight=="bold")fontWeight=700;
+        else if(computedWeight=="normal")fontWeight=400;
+        else if(!computedWeight.empty())fontWeight=static_cast<int>(parseNumber(computedWeight,inheritedWeight));
     }
 
     if(domNode->type()==NodeType::Element){
         tag=domNode->name();
+        if(tag=="a"){
+            linkHref=domNode->attribute("href");
+            linkId=static_cast<uint64_t>(reinterpret_cast<uintptr_t>(domNode));
+            std::string linkColor=domNode->computedStyle("color");
+            colorValue=linkColor.empty()?"#0000ee":linkColor;
+            std::string decoration=domNode->computedStyle("text-decoration");
+            underline=decoration.empty()||decoration.find("underline")!=std::string::npos;
+        }else if(!domNode->computedStyle("text-decoration").empty()){
+            std::string decoration=domNode->computedStyle("text-decoration");
+            underline=decoration.find("underline")!=std::string::npos;
+        }
+        if(domNode->computedStyle("font-weight").empty()&&(tag=="h1"||tag=="h2"||tag=="h3"||tag=="h4"||tag=="h5"||tag=="h6"))fontWeight=700;
         Color foreground=parseColor(colorValue);
-        std::string background=domNode->computedStyle("background-color");
-        Color backgroundColor=background.empty()?Color{0,0,0,0}:parseColor(background,colorValue);
+        std::string hoverColorValue=domNode->computedStyle("hover-color");
+        if(!hoverColorValue.empty())hoverColor=parseColor(hoverColorValue,colorValue);
+        std::string background=domNode->computedStyle("background");
+        std::string backgroundColorValue=domNode->computedStyle("background-color");
+        if(backgroundColorValue.empty()||backgroundColorValue=="transparent")
+            backgroundColorValue=background;
+        Color backgroundColor=backgroundColorValue.empty()?Color{0,0,0,0}:parseColor(backgroundColorValue,colorValue);
+
+        if(domNode->hasAttribute("id"))displayList.addElement(PaintElementType::Anchor,absoluteX,absoluteY,std::max(node->width,1.0f),std::max(node->height,1.0f),{0,0,0,0},"","",domNode->attribute("id"));
+        if(tag=="a"&&!linkHref.empty())displayList.addElement(PaintElementType::Link,absoluteX,absoluteY,std::max(node->width,1.0f),std::max(node->height,node->lineHeight),{0,0,0,0},"","",linkHref,"",hoverColor,linkId);
 
         if(backgroundColor.a>0&&node->width>0&&node->height>0)
             displayList.addRect(absoluteX,absoluteY,node->width,node->height,backgroundColor);
 
+        bool control=tag=="input"||tag=="button"||tag=="textarea"||tag=="select";
         std::string border=domNode->computedStyle("border");
-        addBorders(displayList,absoluteX,absoluteY,node->width,node->height,border);
+        const std::string sides[4]={"top","right","bottom","left"};
+        const float widths[4]={node->borderTop,node->borderRight,node->borderBottom,node->borderLeft};
+        Color borderColors[4];
+        std::string borderStyles[4];
+        std::string commonColor=domNode->computedStyle("border-color");
+        std::string commonStyle=domNode->computedStyle("border-style");
+        std::string shorthandColor=shorthandBorderColor(border);
+        std::string shorthandStyle=shorthandBorderStyle(border);
+        for(int i=0;i<4;i++){
+            std::string sideColor=domNode->computedStyle(std::string("border-")+sides[i]+"-color");
+            if(sideColor.empty())sideColor=borderBoxValue(commonColor,i);
+            if(sideColor.empty())sideColor=shorthandColor;
+            if(sideColor.empty())sideColor=control?"#767676":colorValue;
+            borderColors[i]=parseColor(sideColor,colorValue);
+
+            borderStyles[i]=domNode->computedStyle(std::string("border-")+sides[i]+"-style");
+            if(borderStyles[i].empty())borderStyles[i]=borderBoxValue(commonStyle,i);
+            if(borderStyles[i].empty())borderStyles[i]=shorthandStyle;
+            if(borderStyles[i].empty())borderStyles[i]=control&&node->borderTop>0?"solid":"none";
+        }
+        addBorders(
+            displayList,absoluteX,absoluteY,node->width,node->height,
+            widths[0],widths[1],widths[2],widths[3],
+            borderColors[0],borderColors[1],borderColors[2],borderColors[3],
+            borderStyles[0],borderStyles[1],borderStyles[2],borderStyles[3]
+        );
     
         if(tag=="hr"){
             Color ruleColor=parseColor(domNode->computedStyle("border-color"),colorValue);
@@ -287,11 +383,14 @@ void DisplayListBuilder::buildNode(
             displayList.addElement(PaintElementType::Input,absoluteX,absoluteY,node->width,node->height,inputColor,"","",domNode->attribute("value"),inputType);
         }else if(tag=="button"){
             Color buttonColor=backgroundColor.a?backgroundColor:Color{239,239,239,255};
-            displayList.addElement(PaintElementType::Button,absoluteX,absoluteY,node->width,node->height,buttonColor,"","",domNode->attribute("value"),domNode->attribute("type"));
+            std::string label=collectButtonText(domNode);
+            if(label.empty())label=domNode->attribute("value");
+            displayList.addElement(PaintElementType::Button,absoluteX,absoluteY,node->width,node->height,buttonColor,"","",label,domNode->attribute("type"),foreground);
         }
     }
 
     if(domNode->type()==NodeType::Text){
+        if(insideButton)return;
         if(!node->textFragments.empty()){
             for(const auto& fragment:node->textFragments){
                 if(fragment.text.empty())continue;
@@ -300,8 +399,12 @@ void DisplayListBuilder::buildNode(
                     absoluteX+fragment.x,
                     absoluteY+fragment.y+node->fontBaseline,
                     node->fontSize,
+                    fontWeight,
                     fragment.text,
-                    parseColor(colorValue)
+                    parseColor(colorValue),
+                    underline,
+                    linkHref,
+                    linkId
                 );
             }
         }else{
@@ -318,8 +421,12 @@ void DisplayListBuilder::buildNode(
                     absoluteX,
                     absoluteY+node->fontBaseline,
                     node->fontSize,
+                    fontWeight,
                     content,
-                    parseColor(colorValue)
+                    parseColor(colorValue),
+                    underline,
+                    linkHref,
+                    linkId
                 );
             }
         }
@@ -333,7 +440,13 @@ void DisplayListBuilder::buildNode(
             displayList,
             absoluteX,
             absoluteY,
-            colorValue
+            colorValue,
+            fontWeight,
+            insideButton||tag=="button",
+            linkHref,
+            underline,
+            hoverColor,
+            linkId
         );
     }
 }

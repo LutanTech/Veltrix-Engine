@@ -42,6 +42,7 @@ struct LayoutNode {
     float borderLeft = 0;
 
     float fontSize = 16;
+    int fontWeight = 400;
     float lineHeight = 0;
     float fontBaseline = 0;
 

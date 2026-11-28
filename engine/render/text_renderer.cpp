@@ -1,8 +1,10 @@
 
 #include "text_renderer.h"
+#include FT_SYNTHESIS_H
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 namespace Veltrix {
@@ -107,6 +109,16 @@ float TextRenderer::lineHeight(float size) {
     );
 }
 
+float TextRenderer::baseline(float size) {
+    unsigned int fontSize=static_cast<unsigned int>(std::max(1.0f,size));
+    if(!fontManager.setSize(fontSize))return lineHeight(size)*.8f;
+    FT_Face face=fontManager.face();
+    if(!face||!face->size)return lineHeight(size)*.8f;
+    float ascender=face->size->metrics.ascender/64.0f;
+    float metricsHeight=face->size->metrics.height/64.0f;
+    return (lineHeight(size)-metricsHeight)*.5f+ascender;
+}
+
 const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
     uint32_t codepoint,
     unsigned int size,
@@ -118,7 +130,8 @@ const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
         text.color.r,
         text.color.g,
         text.color.b,
-        text.color.a
+        text.color.a,
+        static_cast<uint16_t>(text.weight)
     };
 
     auto found = glyphCache.find(key);
@@ -144,6 +157,9 @@ const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
     ) != 0) {
         return nullptr;
     }
+
+    if (text.weight >= 600)
+        FT_GlyphSlot_Embolden(face->glyph);
 
     if (FT_Render_Glyph(
         face->glyph,
@@ -237,7 +253,44 @@ const TextRenderer::CachedGlyph* TextRenderer::getGlyph(
     return &result.first->second;
 }
 
-void TextRenderer::render(const PaintText& text) {
+void TextRenderer::render(const PaintText& text){renderRange(text,0,text.text.size());}
+
+std::pair<float,float> TextRenderer::measureRangeBounds(const PaintText& text,size_t start,size_t end){
+    if(!fontManager.face())return {0.0f,0.0f};
+    unsigned int size=static_cast<unsigned int>(std::max(1.0f,text.size));
+    if(!fontManager.setSize(size))return {0.0f,0.0f};
+    FT_Face face=fontManager.face();
+    float cursorX=0,left=std::numeric_limits<float>::max(),right=std::numeric_limits<float>::lowest();
+    FT_UInt previousGlyph=0;
+    for(size_t position=0;position<text.text.size();){
+        size_t glyphStart=position;
+        uint32_t codepoint=nextCodepoint(text.text,position);
+        if(codepoint=='\r')continue;
+        if(codepoint=='\n'){cursorX=0;previousGlyph=0;continue;}
+        const CachedGlyph* glyph=getGlyph(codepoint,size,text);
+        if(!glyph){previousGlyph=0;continue;}
+        if(FT_HAS_KERNING(face)&&previousGlyph&&glyph->glyphIndex){
+            FT_Vector kerning;
+            if(FT_Get_Kerning(face,previousGlyph,glyph->glyphIndex,FT_KERNING_DEFAULT,&kerning)==0)cursorX+=static_cast<float>(kerning.x)/64.0f;
+        }
+        if(glyphStart>=start&&glyphStart<end){
+            left=std::min(left,cursorX);
+            right=std::max(right,cursorX+glyph->advance);
+            if(glyph->texture){
+                float width=0,height=0;
+                SDL_GetTextureSize(glyph->texture,&width,&height);
+                left=std::min(left,cursorX+glyph->bitmapLeft);
+                right=std::max(right,cursorX+glyph->bitmapLeft+width);
+            }
+        }
+        cursorX+=glyph->advance;
+        previousGlyph=glyph->glyphIndex;
+    }
+    if(left==std::numeric_limits<float>::max())return {0.0f,0.0f};
+    return {left,right};
+}
+
+void TextRenderer::renderRange(const PaintText& text,size_t start,size_t end){
     if (!renderer || !fontManager.face()) {
         return;
     }
@@ -259,6 +312,7 @@ void TextRenderer::render(const PaintText& text) {
     FT_UInt previousGlyph = 0;
 
     for (size_t position = 0; position < text.text.size();) {
+        size_t glyphStart=position;
         uint32_t codepoint =
             nextCodepoint(text.text, position);
 
@@ -305,7 +359,7 @@ void TextRenderer::render(const PaintText& text) {
             }
         }
 
-        if (glyph->texture) {
+        if (glyphStart>=start&&glyphStart<end&&glyph->texture) {
             float width = 0;
             float height = 0;
 

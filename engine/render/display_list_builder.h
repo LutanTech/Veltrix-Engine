@@ -16,7 +16,13 @@ private:
         DisplayList& displayList,
         float parentX,
         float parentY,
-        const std::string& inheritedColor
+        const std::string& inheritedColor,
+        int inheritedWeight,
+        bool insideButton,
+        const std::string& inheritedLink="",
+        bool inheritedUnderline=false,
+        Color inheritedHoverColor={0,0,0,0},
+        uint64_t inheritedLinkId=0
     );
 
     Color parseColor(

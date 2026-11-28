@@ -108,6 +108,7 @@ int main() {
         Veltrix::CSSParser cssParser;
 
         std::string html = readFile("index.html");
+        engine.setDocumentBasePath("index.html");
         auto document = parser.parse(html);
 
 
@@ -122,7 +123,9 @@ int main() {
 
 
         Veltrix::LayoutEngine layoutEngine;
-        auto layout = layoutEngine.build(document.root(), 1280);
+        float viewportWidth=0,viewportHeight=0;
+        engine.getViewportSize(viewportWidth,viewportHeight);
+        auto layout=layoutEngine.build(document.root(),viewportWidth,viewportHeight);
 
         if (!layout) {
             throw std::runtime_error("Could not build layout tree.");
@@ -157,6 +160,11 @@ int main() {
         std::cout << "[VelCore] Entering runtime...\n";
 
         engine.setDisplayList(displayList);
+        engine.setResizeHandler([&](float width,float height){
+            layout=layoutEngine.build(document.root(),width,height);
+            if(!layout)throw std::runtime_error("Could not rebuild layout after window resize.");
+            return displayListBuilder.build(layout.get());
+        });
         engine.run();
     }
     catch (const std::exception& error) {

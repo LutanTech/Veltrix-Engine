@@ -1254,28 +1254,7 @@ void StyleEngine::apply(
         std::string classes = node->attribute("class");
     
     }
-    if (node->hasAttribute("style")) {
-        CSSParser inlineParser;
-        auto inlineRules = inlineParser.parse("*{" + node->attribute("style") + "}");
-    
-        if (!inlineRules.empty()) {
-            for (const auto& [name, value] : inlineRules.front().style.allProperties()) {
-                if (name.rfind("--", 0) == 0) {
-                    variables[name] = value;
-                    node->setCustomProperty(name, value);
-                    continue;
-                }
-    
-                std::string resolved = resolveVariables(value, variables);
-    
-                if (resolved == "inherit" || resolved == "initial" || resolved == "unset") {
-                    continue;
-                }
-    
-                node->setComputedStyle(name, resolved);
-            }
-        }
-    }
+
 
     for (const auto& [name, value] : variables) {
         node->setCustomProperty(
@@ -1308,6 +1287,45 @@ void StyleEngine::apply(
                 resolved
             );
         }
+    }
+
+    if (node->hasAttribute("style")) {
+        CSSParser inlineParser;
+        auto inlineRules = inlineParser.parse("*{" + node->attribute("style") + "}");
+    
+        if (!inlineRules.empty()) {
+            for (const auto& [name, value] : inlineRules.front().style.allProperties()) {
+                if (name.rfind("--", 0) == 0) {
+                    variables[name] = value;
+                    node->setCustomProperty(name, value);
+                    continue;
+                }
+    
+                std::string resolved = resolveVariables(value, variables);
+    
+                if (resolved == "inherit" || resolved == "initial" || resolved == "unset") {
+                    continue;
+                }
+    
+                node->setComputedStyle(name, resolved);
+            }
+        }
+    }
+
+    if(node->type()==NodeType::Element&&node->name()=="a"){
+        if(node->computedStyle("color").empty())node->setComputedStyle("color","#0000ee");
+        if(node->computedStyle("text-decoration").empty())node->setComputedStyle("text-decoration","underline");
+    }
+
+    for(const auto& rule:rules){
+        size_t hover=rule.selector.find(":hover");
+        if(hover==std::string::npos)continue;
+        std::string selector=rule.selector;
+        selector.erase(hover,6);
+        if(!matchesSelector(selector,node,ancestors))continue;
+        const auto& properties=rule.style.allProperties();
+        auto color=properties.find("color");
+        if(color!=properties.end())node->setComputedStyle("hover-color",resolveVariables(color->second,variables));
     }
 
     std::string color =

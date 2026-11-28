@@ -2,6 +2,9 @@
 #include <SDL3/SDL.h>
 #include "render/display_list.h"
 #include "render/text_renderer.h"
+#include <functional>
+#include <string>
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
 
@@ -11,6 +14,11 @@ class Engine {
 public:
     bool initialize();
     void setDisplayList(const DisplayList& list);
+    void setDocumentBasePath(const std::string& path);
+    void registerBlob(const std::string& url,const std::vector<uint8_t>& data);
+    void revokeBlob(const std::string& url);
+    void setResizeHandler(std::function<DisplayList(float,float)> handler);
+    void getViewportSize(float& width,float& height) const;
     void run();
     void shutdown();
 
@@ -20,13 +28,16 @@ private:
     SDL_Renderer* renderer=nullptr;
     SDL_Cursor* arrowCursor=nullptr;
     SDL_Cursor* textCursor=nullptr;
+    SDL_Cursor* linkCursor=nullptr;
     DisplayList displayList;
     TextRenderer textRenderer;
 
     float scrollOffset=0;
     float targetScrollOffset=0;
     float contentHeight=0;
+    float viewportWidth=0;
     float viewportHeight=800;
+    std::function<DisplayList(float,float)> resizeHandler;
     float scrollSpeed=48;
     float scrollSmoothing=14.0f;
     float scrollbarWidth=10;
@@ -54,6 +65,9 @@ private:
     Uint64 caretStartTime=0;
 
     void updateScrollbar();
+    void rebuildLayout(int width,int height);
+    void renderFrame();
+    static bool SDLCALL handleLiveResizeEvent(void* userdata,SDL_Event* event);
     void renderScrollbar();
     void handleScrollbar(const SDL_Event& event);
     void updateContentHeight();
@@ -80,6 +94,9 @@ private:
     
     std::string selectedText() const;
     std::unordered_map<std::string,SDL_Texture*> imageTextures;
+    std::unordered_map<std::string,std::vector<uint8_t>> blobResources;
+    std::string documentBasePath;
+    SDL_Texture* loadImageTexture(const std::string& source);
 
     void selectWord(int itemIndex,size_t offset);
     void selectLine(int itemIndex);
@@ -96,6 +113,12 @@ private:
     size_t inputSelectionStart=0;
     size_t inputSelectionEnd=0;
     bool inputSelecting=false;
+    Uint64 lastInputClickTime=0;
+    int inputClickCount=0;
+    float mouseX=0;
+    float mouseY=0;
+    int hoveredButton=-1;
+    int pressedButton=-1;
 
     bool handleInputMouse(const SDL_Event& event);
     void handleInputKeyboard(const SDL_Event& event);

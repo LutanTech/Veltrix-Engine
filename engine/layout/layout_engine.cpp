@@ -20,7 +20,7 @@ float parseNumber(const std::string& value,float fallback=0){
 }
 
 float collapseMargins(float a,float b){
-    return std::max(a,b)+std::min(std::min(a,b),0.0f);
+    return std::max(std::max(a,b),0.0f)+std::min(std::min(a,b),0.0f);
 }
 
 std::string lower(const std::string& value){
@@ -77,12 +77,19 @@ void parseBox(Node* node,const char* property,float& top,float& right,float& bot
 void parseBorders(Node* node,float& top,float& right,float& bottom,float& left){
     if(!node)return;
 
+    std::string shorthand=node->computedStyle("border");
+    if(!shorthand.empty()){
+        size_t position=shorthand.find_first_of("0123456789.");
+        if(position!=std::string::npos){
+            float width=parseNumber(shorthand.substr(position),0);
+            top=right=bottom=left=width;
+        }
+    }
+
     std::string borderWidth=node->computedStyle("border-width");
     if(!borderWidth.empty())expandBox(borderWidth,top,right,bottom,left);
 
-    std::string value;
-
-    value=node->computedStyle("border-top-width");
+    std::string value=node->computedStyle("border-top-width");
     if(!value.empty())top=parseNumber(value,top);
 
     value=node->computedStyle("border-right-width");
@@ -93,16 +100,6 @@ void parseBorders(Node* node,float& top,float& right,float& bottom,float& left){
 
     value=node->computedStyle("border-left-width");
     if(!value.empty())left=parseNumber(value,left);
-
-    std::string shorthand=node->computedStyle("border");
-
-    if(!shorthand.empty()&&borderWidth.empty()){
-        size_t position=shorthand.find_first_of("0123456789.");
-        if(position!=std::string::npos){
-            float width=parseNumber(shorthand.substr(position),0);
-            top=right=bottom=left=width;
-        }
-    }
 }
 
 std::string defaultDisplay(const std::string& tag){
@@ -249,11 +246,12 @@ void LayoutEngine::shutdown(){
     fontAttempted=true;
 }
 
-float LayoutEngine::measureText(const std::string& text,float fontSize){
+float LayoutEngine::measureText(const std::string& text,float fontSize,int fontWeight){
     if(fontReady){
         return fontManager.measureText(
             text,
-            static_cast<unsigned int>(std::max(1.0f,fontSize))
+            static_cast<unsigned int>(std::max(1.0f,fontSize)),
+            static_cast<unsigned int>(std::max(100,fontWeight))
         );
     }
 
@@ -270,7 +268,7 @@ void LayoutEngine::layoutText(LayoutNode& layout,const std::string& text,float a
     float maximumWidth=0;
     float y=0;
 
-    const float spaceWidth=measureText(" ",layout.fontSize);
+    const float spaceWidth=measureText(" ",layout.fontSize,layout.fontWeight);
 
     auto finishLine=[&](){
         if(!currentLine.empty()){
@@ -292,7 +290,7 @@ void LayoutEngine::layoutText(LayoutNode& layout,const std::string& text,float a
     auto appendWord=[&](const std::string& value){
         if(value.empty())return;
 
-        float wordWidth=measureText(value,layout.fontSize);
+        float wordWidth=measureText(value,layout.fontSize,layout.fontWeight);
 
         if(!currentLine.empty()&&availableWidth>0&&
            currentWidth+spaceWidth+wordWidth>availableWidth){
@@ -307,7 +305,7 @@ void LayoutEngine::layoutText(LayoutNode& layout,const std::string& text,float a
                 );
 
                 std::string character=value.substr(position,length);
-                float characterWidth=measureText(character,layout.fontSize);
+                float characterWidth=measureText(character,layout.fontSize,layout.fontWeight);
 
                 if(!currentLine.empty()&&
                    currentWidth+characterWidth>availableWidth){
@@ -374,19 +372,21 @@ void LayoutEngine::layoutText(LayoutNode& layout,const std::string& text,float a
     layout.height=y;
 }
 
-std::unique_ptr<LayoutNode> LayoutEngine::build(Node* root,float viewportWidth){
+std::unique_ptr<LayoutNode> LayoutEngine::build(Node* root,float viewportWidth,float viewportHeight){
     if(!root)return nullptr;
 
     if(!fontAttempted)
         initialize("assets/fonts/Roboto-Regular.ttf");
 
-    return buildNode(root,viewportWidth,16);
+    return buildNode(root,viewportWidth,viewportHeight,16,400);
 }
 
 std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
     Node* node,
     float availableWidth,
-    float inheritedFontSize
+    float availableHeight,
+    float inheritedFontSize,
+    int inheritedFontWeight
 ){
     if(!node)return nullptr;
 
@@ -394,6 +394,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
     layout->domNode=node;
     layout->fontSize=inheritedFontSize;
+    layout->fontWeight=inheritedFontWeight;
     layout->lineHeight=inheritedFontSize*1.2f;
 
     if(node->type()==NodeType::Text){
@@ -430,11 +431,25 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
     std::string fontSizeValue=node->computedStyle("font-size");
 
-    if(!fontSizeValue.empty())
+    if(!fontSizeValue.empty()){
         layout->fontSize=parseNumber(fontSizeValue,inheritedFontSize);
+    }else{
+        if(tag=="h1")layout->fontSize=inheritedFontSize*2.0f;
+        else if(tag=="h2")layout->fontSize=inheritedFontSize*1.5f;
+        else if(tag=="h3")layout->fontSize=inheritedFontSize*1.17f;
+        else if(tag=="h4")layout->fontSize=inheritedFontSize;
+        else if(tag=="h5")layout->fontSize=inheritedFontSize*0.83f;
+        else if(tag=="h6")layout->fontSize=inheritedFontSize*0.67f;
+    }
 
     if(layout->fontSize<=0)
         layout->fontSize=inheritedFontSize;
+
+    std::string fontWeightValue=node->computedStyle("font-weight");
+    if(fontWeightValue=="bold")layout->fontWeight=700;
+    else if(fontWeightValue=="normal")layout->fontWeight=400;
+    else if(!fontWeightValue.empty())layout->fontWeight=static_cast<int>(parseNumber(fontWeightValue,inheritedFontWeight));
+    else if(tag=="h1"||tag=="h2"||tag=="h3"||tag=="h4"||tag=="h5"||tag=="h6")layout->fontWeight=700;
 
     layout->lineHeight=layout->fontSize*1.2f;
 
@@ -455,6 +470,13 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             layout->lineHeight=parsed*layout->fontSize;
     }
 
+    bool hasMargin=
+        !node->computedStyle("margin").empty()||
+        !node->computedStyle("margin-top").empty()||
+        !node->computedStyle("margin-right").empty()||
+        !node->computedStyle("margin-bottom").empty()||
+        !node->computedStyle("margin-left").empty();
+
     parseBox(
         node,
         "margin",
@@ -463,6 +485,21 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         layout->marginBottom,
         layout->marginLeft
     );
+
+    if(tag=="body"&&!hasMargin)
+        layout->marginTop=layout->marginRight=layout->marginBottom=layout->marginLeft=8;
+
+    if(tag=="h1"){
+        layout->marginTop=layout->marginBottom=layout->fontSize*0.67f;
+    }else if(tag=="h2"){
+        layout->marginTop=layout->marginBottom=layout->fontSize*0.83f;
+    }else if(tag=="h3"||tag=="h4"){
+        layout->marginTop=layout->marginBottom=layout->fontSize;
+    }else if(tag=="h5"){
+        layout->marginTop=layout->marginBottom=layout->fontSize*1.33f;
+    }else if(tag=="h6"){
+        layout->marginTop=layout->marginBottom=layout->fontSize*1.67f;
+    }
 
     parseBox(
         node,
@@ -480,6 +517,38 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         layout->borderBottom,
         layout->borderLeft
     );
+
+    bool control=tag=="input"||tag=="button"||tag=="textarea"||tag=="select";
+    bool hasPadding=
+        !node->computedStyle("padding").empty()||
+        !node->computedStyle("padding-top").empty()||
+        !node->computedStyle("padding-right").empty()||
+        !node->computedStyle("padding-bottom").empty()||
+        !node->computedStyle("padding-left").empty();
+    bool hasBorder=
+        !node->computedStyle("border").empty()||
+        !node->computedStyle("border-width").empty()||
+        !node->computedStyle("border-top-width").empty()||
+        !node->computedStyle("border-right-width").empty()||
+        !node->computedStyle("border-bottom-width").empty()||
+        !node->computedStyle("border-left-width").empty();
+
+    if(control&&!hasPadding){
+        if(tag=="input"||tag=="select"){
+            layout->paddingTop=4;
+            layout->paddingRight=6;
+            layout->paddingBottom=4;
+            layout->paddingLeft=6;
+        }else{
+            layout->paddingTop=5;
+            layout->paddingRight=10;
+            layout->paddingBottom=5;
+            layout->paddingLeft=10;
+        }
+    }
+
+    if(control&&!hasBorder)
+        layout->borderTop=layout->borderRight=layout->borderBottom=layout->borderLeft=1;
 
     std::string value;
 
@@ -528,6 +597,8 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         layout->borderBottom;
 
     std::string boxSizing=node->computedStyle("box-sizing");
+    if(control&&boxSizing.empty())
+        boxSizing="border-box";
     std::string widthValue=node->computedStyle("width");
     std::string heightValue=node->computedStyle("height");
 
@@ -597,7 +668,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             );
         }
     }else{
-        specifiedWidth=parseNumber(widthValue,availableWidth);
+        specifiedWidth=widthValue.find('%')!=std::string::npos?availableWidth*parseNumber(widthValue)/100.0f:parseNumber(widthValue,availableWidth);
     }
 
     if(boxSizing=="border-box"){
@@ -670,7 +741,9 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             contentAvailableWidth>0?
                 contentAvailableWidth:
                 availableWidth,
-            layout->fontSize
+            heightValue.empty()||heightValue=="auto"?availableHeight:(heightValue.find('%')!=std::string::npos?availableHeight*parseNumber(heightValue)/100.0f:parseNumber(heightValue,availableHeight)),
+            layout->fontSize,
+            layout->fontWeight
         );
 
         if(!childLayout||childLayout->display=="none")
@@ -696,6 +769,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         float y=0;
         float lineHeight=0;
         float maximumWidth=0;
+        float lineStartX=0;
         bool pendingSpace=false;
     };
 
@@ -712,7 +786,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             layout->lineHeight
         );
 
-        flow.x=0;
+        flow.x=flow.lineStartX;
         flow.lineHeight=0;
         flow.pendingSpace=false;
     };
@@ -748,12 +822,14 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
                 float wordWidth=measureText(
                     word,
-                    item->fontSize
+                    item->fontSize,
+                    item->fontWeight
                 );
 
                 float spaceWidth=measureText(
                     " ",
-                    item->fontSize
+                    item->fontSize,
+                    item->fontWeight
                 );
 
                 if(flow.pendingSpace&&flow.x>0){
@@ -761,7 +837,15 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
                        flow.x+spaceWidth+wordWidth>flowWidth){
                         finishLine();
                     }else{
+                        item->textFragments.push_back({
+                            " ",
+                            flow.x-startX,
+                            flow.y-startY,
+                            spaceWidth
+                        });
                         flow.x+=spaceWidth;
+                        flow.lineHeight=std::max(flow.lineHeight,item->lineHeight);
+                        flow.maximumWidth=std::max(flow.maximumWidth,flow.x);
                     }
                 }
 
@@ -786,7 +870,8 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
                         float characterWidth=measureText(
                             character,
-                            item->fontSize
+                            item->fontSize,
+                            item->fontWeight
                         );
 
                         if(flow.x>0&&
@@ -908,6 +993,10 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
         float startX=flow.x;
         float startY=flow.y;
+        float outerFlowY=startY;
+        float outerLineStartX=flow.lineStartX;
+        float outerMaximumWidth=flow.maximumWidth;
+        flow.maximumWidth=flow.x;
 
         float referenceLineHeight=std::max(
             parentLineHeight,
@@ -965,6 +1054,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
 
         flow.y=childOriginY;
         flow.x=childOriginX;
+        flow.lineStartX=childOriginX;
 
         float previousBlockMargin=0;
         bool previousBlock=false;
@@ -1037,8 +1127,11 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         flow.y+=previousBlockMargin;
 
         
+        float innerMaximumX=std::max(flow.x,flow.maximumWidth);
+        flow.maximumWidth=std::max(outerMaximumWidth,innerMaximumX);
+
         float consumedWidth=
-            flow.x-
+            std::max(flow.x,innerMaximumX)-
             elementOriginX;
 
         float consumedHeight=
@@ -1076,6 +1169,9 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             item->borderTop-
             item->borderBottom
         );
+
+        flow.y=outerFlowY+std::max(0.0f,flow.y-childOriginY);
+        flow.lineStartX=outerLineStartX;
 
         float verticalExtent=std::max(
             item->height+alignmentOffset,
@@ -1174,10 +1270,7 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
     );
 
     if(!heightValue.empty()&&heightValue!="auto"){
-        float specifiedHeight=parseNumber(
-            heightValue,
-            naturalHeight
-        );
+        float specifiedHeight=heightValue.find('%')!=std::string::npos?availableHeight*parseNumber(heightValue)/100.0f:parseNumber(heightValue,naturalHeight);
 
         if(boxSizing=="border-box"){
             layout->height=std::max(

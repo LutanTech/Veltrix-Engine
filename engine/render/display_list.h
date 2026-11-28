@@ -13,26 +13,34 @@ struct PaintRect {
 };
 struct PaintText {
     float x=0,y=0,size=16;
+    int weight=400;
     std::string text;
     Color color;
+    bool underline=false;
+    std::string linkHref;
+    uint64_t linkId=0;
 };
 enum class PaintElementType {
     HorizontalRule,
     Image,
     Input,
-    Button
+    Button,
+    Link,
+    Anchor
 };
 struct PaintElement {
     PaintElementType type=PaintElementType::HorizontalRule;
     float x=0,y=0,width=0,height=0;
     Color color;
     std::string source,alt,value,typeAttribute;
+    Color textColor{35,35,35,255};
+    uint64_t linkId=0;
 };
 class DisplayList {
 public:
     void addRect(float x,float y,float width,float height,Color color);
-    void addText(float x,float y,float size,const std::string& text,Color color);
-    void addElement(PaintElementType type,float x,float y,float width,float height,Color color,const std::string& source="",const std::string& alt="",const std::string& value="",const std::string& typeAttribute="");
+    void addText(float x,float y,float size,int weight,const std::string& text,Color color,bool underline=false,const std::string& linkHref="",uint64_t linkId=0);
+    void addElement(PaintElementType type,float x,float y,float width,float height,Color color,const std::string& source="",const std::string& alt="",const std::string& value="",const std::string& typeAttribute="",Color textColor={35,35,35,255},uint64_t linkId=0);
     const std::vector<PaintRect>& rectangles() const;
     const std::vector<PaintText>& texts() const;
     const std::vector<PaintElement>& elements() const;
