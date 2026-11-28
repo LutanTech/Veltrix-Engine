@@ -20,6 +20,7 @@ public:
 
     float measureText(const std::string& text, float size);
     float lineHeight(float size);
+    float baseline(float size);
 
 private:
     struct GlyphKey {
