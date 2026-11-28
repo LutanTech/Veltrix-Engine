@@ -4,6 +4,7 @@
 #include <cctype>
 #include <limits>
 #include <string>
+#include <utility>
 #include <SDL3_image/SDL_image.h>
 
 namespace Veltrix {
