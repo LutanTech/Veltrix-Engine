@@ -469,6 +469,13 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
             layout->lineHeight=parsed*layout->fontSize;
     }
 
+    bool hasMargin=
+        !node->computedStyle("margin").empty()||
+        !node->computedStyle("margin-top").empty()||
+        !node->computedStyle("margin-right").empty()||
+        !node->computedStyle("margin-bottom").empty()||
+        !node->computedStyle("margin-left").empty();
+
     parseBox(
         node,
         "margin",
@@ -477,6 +484,9 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
         layout->marginBottom,
         layout->marginLeft
     );
+
+    if(tag=="body"&&!hasMargin)
+        layout->marginTop=layout->marginRight=layout->marginBottom=layout->marginLeft=8;
 
     if(tag=="h1"){
         layout->marginTop=layout->marginBottom=layout->fontSize*0.67f;
