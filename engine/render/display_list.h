@@ -13,6 +13,7 @@ struct PaintRect {
 };
 struct PaintText {
     float x=0,y=0,size=16;
+    int weight=400;
     std::string text;
     Color color;
 };
@@ -31,7 +32,7 @@ struct PaintElement {
 class DisplayList {
 public:
     void addRect(float x,float y,float width,float height,Color color);
-    void addText(float x,float y,float size,const std::string& text,Color color);
+    void addText(float x,float y,float size,int weight,const std::string& text,Color color);
     void addElement(PaintElementType type,float x,float y,float width,float height,Color color,const std::string& source="",const std::string& alt="",const std::string& value="",const std::string& typeAttribute="");
     const std::vector<PaintRect>& rectangles() const;
     const std::vector<PaintText>& texts() const;
