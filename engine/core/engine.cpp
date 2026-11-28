@@ -145,7 +145,8 @@ bool Engine::hitTestText(float mouseX,float mouseY,int& itemIndex,size_t& charac
 
         float width=textWidth(text,text.text.size());
         float localX=mouseX-text.x;
-        float horizontalDistance=localX<0?-localX:localX>width?localX-width:0;
+        if(localX<0||localX>width)continue;
+        float horizontalDistance=0;
 
         if(verticalDistance<bestVertical||(verticalDistance==bestVertical&&horizontalDistance<bestHorizontal)){
             bestVertical=verticalDistance;
