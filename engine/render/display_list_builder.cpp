@@ -271,7 +271,7 @@ std::string collectButtonText(const Node* node){
 
 DisplayList DisplayListBuilder::build(const LayoutNode* root) {
  DisplayList displayList;
- buildNode(root, displayList, 0, 0, "black", 400, false);
+ buildNode(root, displayList, 0, 0, "black", 400, false, "", false);
  return displayList;
 }
 
@@ -282,7 +282,9 @@ void DisplayListBuilder::buildNode(
     float parentY,
     const std::string& inheritedColor,
     int inheritedWeight,
-    bool insideButton
+    bool insideButton,
+    const std::string& inheritedLink,
+    bool inheritedUnderline
 ){
     if(!node||!node->domNode)return;
 
@@ -292,6 +294,8 @@ void DisplayListBuilder::buildNode(
     
     std::string colorValue=inheritedColor;
     std::string tag;
+    std::string linkHref=inheritedLink;
+    bool underline=inheritedUnderline;
     int fontWeight=inheritedWeight;
 
     if(domNode->type()==NodeType::Element){
@@ -305,6 +309,16 @@ void DisplayListBuilder::buildNode(
 
     if(domNode->type()==NodeType::Element){
         tag=domNode->name();
+        if(tag=="a"){
+            linkHref=domNode->attribute("href");
+            std::string linkColor=domNode->computedStyle("color");
+            colorValue=linkColor.empty()?"#0000ee":linkColor;
+            std::string decoration=domNode->computedStyle("text-decoration");
+            underline=decoration.empty()||decoration.find("underline")!=std::string::npos;
+        }else if(!domNode->computedStyle("text-decoration").empty()){
+            std::string decoration=domNode->computedStyle("text-decoration");
+            underline=decoration.find("underline")!=std::string::npos;
+        }
         if(domNode->computedStyle("font-weight").empty()&&(tag=="h1"||tag=="h2"||tag=="h3"||tag=="h4"||tag=="h5"||tag=="h6"))fontWeight=700;
         Color foreground=parseColor(colorValue);
         std::string background=domNode->computedStyle("background");
@@ -376,8 +390,10 @@ void DisplayListBuilder::buildNode(
                     node->fontSize,
                     fontWeight,
                     fragment.text,
-                    parseColor(colorValue)
+                    parseColor(colorValue),
+                    underline
                 );
+                if(!linkHref.empty())displayList.addElement(PaintElementType::Link,absoluteX+fragment.x,absoluteY+fragment.y+node->fontBaseline-node->fontSize*.82f,fragment.width,std::max(node->lineHeight,node->fontSize),{0,0,0,0},"","",linkHref);
             }
         }else{
             const std::string& content=domNode->text();
@@ -395,8 +411,10 @@ void DisplayListBuilder::buildNode(
                     node->fontSize,
                     fontWeight,
                     content,
-                    parseColor(colorValue)
+                    parseColor(colorValue),
+                    underline
                 );
+                if(!linkHref.empty())displayList.addElement(PaintElementType::Link,absoluteX,absoluteY-node->fontSize*.82f,std::max(node->width,1.0f),std::max(node->lineHeight,node->fontSize),{0,0,0,0},"","",linkHref);
             }
         }
 
@@ -411,7 +429,9 @@ void DisplayListBuilder::buildNode(
             absoluteY,
             colorValue,
             fontWeight,
-            insideButton||tag=="button"
+            insideButton||tag=="button",
+            linkHref,
+            underline
         );
     }
 }
