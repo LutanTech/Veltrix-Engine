@@ -2,6 +2,7 @@
 #include <SDL3/SDL.h>
 #include "render/display_list.h"
 #include "render/text_renderer.h"
+#include <functional>
 #include <unordered_map>
 #include <vector>
 
@@ -11,6 +12,8 @@ class Engine {
 public:
     bool initialize();
     void setDisplayList(const DisplayList& list);
+    void setResizeHandler(std::function<DisplayList(float,float)> handler);
+    void getViewportSize(float& width,float& height) const;
     void run();
     void shutdown();
 
@@ -26,7 +29,9 @@ private:
     float scrollOffset=0;
     float targetScrollOffset=0;
     float contentHeight=0;
+    float viewportWidth=0;
     float viewportHeight=800;
+    std::function<DisplayList(float,float)> resizeHandler;
     float scrollSpeed=48;
     float scrollSmoothing=14.0f;
     float scrollbarWidth=10;
