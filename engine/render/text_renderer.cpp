@@ -265,8 +265,8 @@ std::pair<float,float> TextRenderer::measureRangeBounds(const PaintText& text,si
     for(size_t position=0;position<text.text.size();){
         size_t glyphStart=position;
         uint32_t codepoint=nextCodepoint(text.text,position);
-        if(codepoint=='\\r')continue;
-        if(codepoint=='\\n'){cursorX=0;previousGlyph=0;continue;}
+        if(codepoint=='\r')continue;
+        if(codepoint=='\n'){cursorX=0;previousGlyph=0;continue;}
         const CachedGlyph* glyph=getGlyph(codepoint,size,text);
         if(!glyph){previousGlyph=0;continue;}
         if(FT_HAS_KERNING(face)&&previousGlyph&&glyph->glyphIndex){
