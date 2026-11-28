@@ -837,7 +837,15 @@ std::unique_ptr<LayoutNode> LayoutEngine::buildNode(
                        flow.x+spaceWidth+wordWidth>flowWidth){
                         finishLine();
                     }else{
+                        item->textFragments.push_back({
+                            " ",
+                            flow.x-startX,
+                            flow.y-startY,
+                            spaceWidth
+                        });
                         flow.x+=spaceWidth;
+                        flow.lineHeight=std::max(flow.lineHeight,item->lineHeight);
+                        flow.maximumWidth=std::max(flow.maximumWidth,flow.x);
                     }
                 }
 
