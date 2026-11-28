@@ -425,7 +425,8 @@ void DisplayListBuilder::buildNode(
                     content,
                     parseColor(colorValue),
                     underline,
-                    linkHref
+                    linkHref,
+                    linkId
                 );
             }
         }
