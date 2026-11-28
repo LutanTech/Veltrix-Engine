@@ -18,6 +18,7 @@ namespace {
 size_t receiveImageData(char* data,size_t size,size_t count,void* user){
     auto* bytes=static_cast<std::vector<uint8_t>*>(user);
     size_t length=size*count;
+    if(length>64*1024*1024-bytes->size())return 0;
     bytes->insert(bytes->end(),data,data+length);
     return length;
 }
@@ -177,7 +178,8 @@ SDL_Texture* Engine::loadImageTexture(const std::string& source){
         std::string path=source;
         if(path.rfind("file://",0)==0)path=path.substr(7);
         std::filesystem::path filePath(path);
-        if(filePath.is_relative()&&!documentBasePath.empty())filePath=std::filesystem::path(documentBasePath)/filePath;
+        if(!documentBasePath.empty()&&path.rfind("/",0)==0)filePath=std::filesystem::path(documentBasePath)/path.substr(1);
+        else if(filePath.is_relative()&&!documentBasePath.empty())filePath=std::filesystem::path(documentBasePath)/filePath;
         surface=IMG_Load(filePath.string().c_str());
     }
     if(!surface)return nullptr;
