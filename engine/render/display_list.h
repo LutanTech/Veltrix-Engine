@@ -23,7 +23,8 @@ enum class PaintElementType {
     Image,
     Input,
     Button,
-    Link
+    Link,
+    Anchor
 };
 struct PaintElement {
     PaintElementType type=PaintElementType::HorizontalRule;
