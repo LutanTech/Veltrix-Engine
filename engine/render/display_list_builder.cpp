@@ -332,6 +332,7 @@ void DisplayListBuilder::buildNode(
         Color backgroundColor=backgroundColorValue.empty()?Color{0,0,0,0}:parseColor(backgroundColorValue,colorValue);
 
         if(domNode->hasAttribute("id"))displayList.addElement(PaintElementType::Anchor,absoluteX,absoluteY,std::max(node->width,1.0f),std::max(node->height,1.0f),{0,0,0,0},"","",domNode->attribute("id"));
+        if(tag=="a"&&!linkHref.empty())displayList.addElement(PaintElementType::Link,absoluteX,absoluteY,std::max(node->width,1.0f),std::max(node->height,node->lineHeight),{0,0,0,0},"","",linkHref,"",hoverColor);
 
         if(backgroundColor.a>0&&node->width>0&&node->height>0)
             displayList.addRect(absoluteX,absoluteY,node->width,node->height,backgroundColor);
@@ -399,7 +400,6 @@ void DisplayListBuilder::buildNode(
                     parseColor(colorValue),
                     underline
                 );
-                if(!linkHref.empty())displayList.addElement(PaintElementType::Link,absoluteX+fragment.x,absoluteY+fragment.y+node->fontBaseline-node->fontSize*.82f,fragment.width,std::max(node->lineHeight,node->fontSize),{0,0,0,0},"","",linkHref,"",hoverColor);
             }
         }else{
             const std::string& content=domNode->text();
@@ -420,7 +420,6 @@ void DisplayListBuilder::buildNode(
                     parseColor(colorValue),
                     underline
                 );
-                if(!linkHref.empty())displayList.addElement(PaintElementType::Link,absoluteX,absoluteY-node->fontSize*.82f,std::max(node->width,1.0f),std::max(node->lineHeight,node->fontSize),{0,0,0,0},"","",linkHref,"",hoverColor);
             }
         }
 
