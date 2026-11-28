@@ -316,7 +316,7 @@ void DisplayListBuilder::buildNode(
             std::string sideColor=domNode->computedStyle(std::string("border-")+sides[i]+"-color");
             if(sideColor.empty())sideColor=borderBoxValue(commonColor,i);
             if(sideColor.empty())sideColor=shorthandColor;
-            if(sideColor.empty())sideColor=colorValue;
+            if(sideColor.empty())sideColor=control?"#767676":colorValue;
             borderColors[i]=parseColor(sideColor,colorValue);
 
             borderStyles[i]=domNode->computedStyle(std::string("border-")+sides[i]+"-style");
